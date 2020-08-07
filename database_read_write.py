@@ -24,10 +24,10 @@ def read_all_db():
     return df
 
 
-def update_db(df, table_name):
+def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
-    df.to_sql(table_name, engine, if_exists='replace', index=False)
+    df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
 def read_cost_savings():
