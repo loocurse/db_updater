@@ -88,14 +88,15 @@ def _weekFunction(df):
                        (df_week_random['date'] <= (end - dt.timedelta(21))), ['week']] = "{}".format(
         (start - dt.timedelta(21)).strftime('%d %b'))
 
-    # df_week_random.loc[(df_week_random['date'] > start) & (
-    #     df_week_random['date'] <= end), ['week']] = "{} - {}".format(start.strftime('%d %b'), end.strftime('%d %b'))
-    # df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(7))) &
-    #                    (df_week_random['date'] <= (end - dt.timedelta(7))), ['week']] = "{} - {}".format((start - dt.timedelta(7)).strftime('%d %b'), (end - dt.timedelta(7)).strftime('%d %b'))
-    # df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(14))) &
-    #                    (df_week_random['date'] <= (end - dt.timedelta(14))), ['week']] = "{} - {}".format((start - dt.timedelta(14)).strftime('%d %b'), (end - dt.timedelta(14)).strftime('%d %b'))
-    # df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(21))) &
-    #                    (df_week_random['date'] <= (end - dt.timedelta(21))), ['week']] = "{} - {}".format((start - dt.timedelta(21)).strftime('%d %b'), (end - dt.timedelta(21)).strftime('%d %b'))
+    # df_week_random.loc[(df_week_random['date'] > start) & ( df_week_random['date'] <= end), ['week']] = "{} - {
+    # }".format(start.strftime('%d %b'), end.strftime('%d %b')) df_week_random.loc[(df_week_random['date'] > (start -
+    # dt.timedelta(7))) & (df_week_random['date'] <= (end - dt.timedelta(7))), ['week']] = "{} - {}".format((start -
+    # dt.timedelta(7)).strftime('%d %b'), (end - dt.timedelta(7)).strftime('%d %b')) df_week_random.loc[(
+    # df_week_random['date'] > (start - dt.timedelta(14))) & (df_week_random['date'] <= (end - dt.timedelta(14))),
+    # ['week']] = "{} - {}".format((start - dt.timedelta(14)).strftime('%d %b'), (end - dt.timedelta(14)).strftime(
+    # '%d %b')) df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(21))) & (df_week_random['date'] <=
+    # (end - dt.timedelta(21))), ['week']] = "{} - {}".format((start - dt.timedelta(21)).strftime('%d %b'),
+    # (end - dt.timedelta(21)).strftime('%d %b'))
 
     df_week_random.reset_index(drop=True, inplace=True)
 
