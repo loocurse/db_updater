@@ -22,10 +22,11 @@ def initialise_achievements():
 
 
 if __name__ == '__main__':
-    initialise_achievements()
+    # initialise_achievements()
     # schedule.every().hour.do(hourly_update)
     # schedule.every().day.do(daily_update)
     # schedule.every().sunday.do(weekly_monthly_update)
+    update_db(pd.read_csv('achievements_bonus.csv'),'achievements_bonus')
 
     # achievements_update_daily()
     # get_weekly_table()
