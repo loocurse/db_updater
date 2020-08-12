@@ -1,6 +1,7 @@
 from graph_functions import *
 from achievements_functions import *
 from database_read_write import *
+from control_functions import *
 import schedule
 
 CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
@@ -22,12 +23,16 @@ def initialise_achievements():
 
 
 if __name__ == '__main__':
+    device_state = pd.read_csv('tables_csv/device_state.csv')
+
     # initialise_achievements()
     # schedule.every().hour.do(hourly_update)
     # schedule.every().day.do(daily_update)
     # schedule.every().sunday.do(weekly_monthly_update)
     # schedule.every().day.at("03:00").do(check_if_all_devices_off)
-    update_db(pd.read_csv('achievements_bonus.csv'),'achievements_bonus')
+    # update_db(pd.read_csv('achievements_bonus.csv'),'achievements_bonus')
+
+    schedule.every(5).seconds.do()
 
     # achievements_update_daily()
     # get_weekly_table()
@@ -36,3 +41,4 @@ if __name__ == '__main__':
     # update_db(pd.read_csv('achievements_points.csv'), 'achievements_points')
     # update_db(pd.read_csv('achievements_weekly.csv'), 'achievements_weekly')
     # update_db(pd.read_csv('achievements_daily.csv'), 'achievements_daily')
+
