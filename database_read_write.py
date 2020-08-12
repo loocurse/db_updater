@@ -9,17 +9,27 @@ engine = create_engine('postgresql://{}:{}@localhost:{}/{}'.format(CONNECTION_PA
                                                                    CONNECTION_PARAMS['port'],
                                                                    CONNECTION_PARAMS['database']))
 
+def get_entire_table():
+    """Reads the SQL database for the entire output and outputs the dataframe with cols stated below"""
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM power_energy_consumption")
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    df['date'] = pd.to_datetime(df['date'])
+    return df
 
 def read_all_db():
-    """Reads the SQL database and outputs the dataframe with cols stated below"""
+    """Reads the SQL database for the last 6 months and outputs the dataframe with cols stated below"""
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM power_energy_consumption "
                        "WHERE date >= date_trunc('month', now()) - interval '6 month' AND "
                        "date < date_trunc('month', now())")
         results = cursor.fetchall()
-    df = pd.DataFrame(results, columns=['date', 'time', 'unix_time', 'meter_id', 'user_id',
-                                        'energy', 'power', 'device_state', 'device_type'])
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
     df['date'] = pd.to_datetime(df['date'])
     return df
 

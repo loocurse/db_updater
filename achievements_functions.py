@@ -1,7 +1,7 @@
 import database_read_write
 import pandas as pd
 
-points = pd.read_csv('./tables_csv/achievement_points.csv', index_col=['achievement'])['points'].to_dict()
+points = pd.read_csv('/Users/lucasng/Downloads/db_updater/tables_csv/achievements_points.csv', index_col=['achievement'])['points'].to_dict()
 
 
 def _lower_energy_con(user_id):
@@ -133,3 +133,29 @@ def achievements_update_daily():
         output = pd.concat([output, user_df], ignore_index=True)
     database_read_write.update_db(output, 'achievements_weekly')
 
+def check_if_all_devices_off():
+    today = database_read_write.get_today()
+    df = database_read_write.get_daily_table()
+    df['week_day'] = df.index
+    df.set_index('id',inplace=True,append=True)
+    user_ids = sorted(df['user_id'].unique())
+    for user_id in user_ids:
+        # Check if devices are all turned off
+        df2 = database_read_write.get_energy_ytd_today(user_id)
+        df2['date'] = pd.to_datetime(df2['date'])
+        df2['datetime'] = pd.to_datetime(df2['date'].astype(str) + " " + df2['time'].astype(str))
+        df2 = df2.loc[(df2['date'].dt.date == today) & (df2['datetime'].dt.hour == 3)]
+        devices_off = df2['device_state'].sum() == 0
+
+        # Get ID of user
+        index = df.index[(df['user_id'] == user_id) & (df['week_day'] == today.strftime('%a'))]
+        if devices_off:
+            df.at[index,'turn_off_end'] = 10
+
+    # Send to DB
+
+    df.reset_index(drop=True, inplace=True)
+    df.reset_index(drop=False,inplace=True)
+    df.rename(columns={'index':'id'}, inplace=True)
+
+    database_read_write.update_db(df, 'achievements_daily', index_to_col=False)

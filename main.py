@@ -26,6 +26,7 @@ if __name__ == '__main__':
     # schedule.every().hour.do(hourly_update)
     # schedule.every().day.do(daily_update)
     # schedule.every().sunday.do(weekly_monthly_update)
+    # schedule.every().day.at("03:00").do(check_if_all_devices_off)
     update_db(pd.read_csv('achievements_bonus.csv'),'achievements_bonus')
 
     # achievements_update_daily()

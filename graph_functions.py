@@ -360,6 +360,30 @@ def _cost_savings(df):
     # month_view = month_view.set_index('month')
     return week_view[-7:-1], month_view[-7:-1]
 
+def _cumulative_savings(user_id):
+    """Calculates the cumulative savings and uploads the value to the database"""
+    df = get_entire_table()
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.set_index('date')
+    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()['power']
+    # week_view = week_view.apply(_calculate_cost)
+    total_savings = 0
+    # print('hello')
+    for num,item in enumerate(week_view.tolist()):
+        avg = sum(week_view.tolist()[:num])/(num+1)
+        # print(item)
+        saving = avg - item
+        # print(saving)
+        if saving > 0:
+            total_savings += saving
+    kwh = round(total_savings / 1000, 3)
+    cost = round(_calculate_cost(total_savings),2)
+    trees = round(cost/2,2)
+    return kwh, cost, trees
+
+if __name__ == '__main__':
+    print(_cumulative_savings(pd.read_csv('tables_csv/generator_6m.csv')))
+
 
 def graph_hourly_update():
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating hourly consumption')
