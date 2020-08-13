@@ -14,13 +14,13 @@ def _lower_energy_con(user_id):
 def _turn_off_leave(user_id):
     """Achievement: Turn off your plug loads when you leave your desk for a long period of time during the day"""
     # Approach: check if plug loads are switched off when presence is not detected
-    condition = True
+    condition = False
     return points['turn_off_leave'] if condition else 0
 
 
 def _turn_off_end(user_id):
     """Achievement: Turn off your plug loads during at the end of the day"""
-    condition = True
+    condition = False
     return points['turn_off_end'] if condition else 0
 
 
@@ -33,60 +33,70 @@ def _cost_saving(user_id):
 
 
 def _schedule_based(user_id):
-    """Achievement: Set next week's schedule-based controls"""
-    condition = True
+    """DONE BY MIRABEL
+    Achievement: Set next week's schedule-based controls"""
+    condition = False
     return points['schedule_based'] if condition else 0
 
 
 def _complete_daily(user_id):
     """Achievement: Complete all daily achievements for 4 days of the week"""
-    if database_read_write.get_today() not in ['Thu','Fri','Sat']:
+    if database_read_write.get_today() not in ['Thu', 'Fri', 'Sat']:
         return False
     else:
         df = database_read_write.get_daily_table()
         df = df.loc[df.user_id == user_id]
-        return points['complete_daily'] if sum(df['complete_all_daily'].to_list()) >= 20*4 else 0
+        return points['complete_daily'] if sum(df['complete_all_daily'].to_list()) >= 20 * 4 else 0
 
 
 def _tree_first(user_id):
     """Achievement: Save your first tree"""
-    condition = True
+    saved_kwh = database_read_write.get_cumulative_saving(user_id)
+    saved_trees = round(saved_kwh * 0.201 * 0.5)
+    condition = saved_trees > 1
     return points['tree_first'] if condition else 0
 
 
 def _tree_fifth(user_id):
     """Achievement: Save your fifth tree"""
-    condition = True
+    saved_kwh = database_read_write.get_cumulative_saving(user_id)
+    saved_trees = round(saved_kwh * 0.201 * 0.5)
+    condition = saved_trees > 5
     return points['tree_fifth'] if condition else 0
 
 
 def _tree_tenth(user_id):
     """Achievement: Save your tenth tree"""
-    condition = True
+    saved_kwh = database_read_write.get_cumulative_saving(user_id)
+    saved_trees = round(saved_kwh * 0.201 * 0.5)
+    condition = saved_trees > 5
     return points['tree_tenth'] if condition else 0
 
 
 def _redeem_reward(user_id):
     """Achievement: Redeem your first reward from your rewards page"""
-    condition = True
+    condition = False
     return points['redeem_reward'] if condition else 0
 
 
 def _first_remote(user_id):
-    """Achievement: Try out our remote control feature for the first time"""
-    condition = True
+    """DONE BY MIRABEL
+    Achievement: Try out our remote control feature for the first time"""
+    condition = False
     return points['first_remote'] if condition else 0
 
 
 def _first_schedule(user_id):
-    """Achievement: Set your first schedule-based setting"""
-    condition = True
+    """DONE BY MIRABEL
+    Achievement: Set your first schedule-based setting"""
+    condition = False
     return points['first_schedule'] if condition else 0
 
 
 def _first_presence(user_id):
-    """Achievement: Set your first presence-based setting"""
-    condition = True
+    """DONE BY MIRABEL
+    Achievement: Set your first presence-based setting"""
+    condition = False
     return points['first_presence'] if condition else 0
 
 

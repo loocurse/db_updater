@@ -2,8 +2,12 @@ from sqlalchemy import create_engine
 import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
-from main import CONNECTION_PARAMS
-
+# from main import CONNECTION_PARAMS
+CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
+                         user='raymondlow',
+                         password='password123',
+                         host='localhost',
+                         port='5432')
 engine = create_engine('postgresql://{}:{}@localhost:{}/{}'.format(CONNECTION_PARAMS['user'],
                                                                    CONNECTION_PARAMS['password'],
                                                                    CONNECTION_PARAMS['port'],
@@ -92,3 +96,14 @@ def get_energy_ytd_today(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
+
+def get_cumulative_saving(user_id):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = f"SELECT cum_savings FROM achievements_bonus WHERE user_id = {user_id}"
+        cursor.execute(query)
+        results = cursor.fetchone()[0]
+    return results
+
+if __name__ == '__main__':
+    get_cumulative_saving(1)

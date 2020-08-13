@@ -23,7 +23,7 @@ def initialise_achievements():
 
 
 if __name__ == '__main__':
-    device_state = pd.read_csv('tables_csv/device_state.csv')
+    # device_state = pd.read_csv('tables_csv/device_state.csv')
 
     # initialise_achievements()
     # schedule.every().hour.do(hourly_update)
