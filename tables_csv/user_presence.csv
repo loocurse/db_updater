@@ -1,0 +1,6 @@
+user_id,presence,last_detected_departure,control_activated_desktop,control_activated_laptop,control_activated_monitor,control_activated_tasklamp,control_activated_fan
+1,0,0,FALSE,FALSE,FALSE,FALSE,FALSE
+2,0,0,FALSE,FALSE,FALSE,FALSE,FALSE
+3,0,0,FALSE,FALSE,FALSE,FALSE,FALSE
+4,0,0,FALSE,FALSE,FALSE,FALSE,FALSE
+5,0,0,FALSE,FALSE,FALSE,FALSE,FALSE
