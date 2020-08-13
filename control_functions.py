@@ -1,3 +1,7 @@
+import psycopg2
+import pandas as pd
+import requests
+from requests.auth import HTTPBasicAuth
 
 
 def check_remote_control():
@@ -5,17 +9,78 @@ def check_remote_control():
     Checks the database for the device state and detect if remote control is activated.
     Checking frequency: 5 seconds
     """
+
+    # Database and Fibaro credentials
+    # user = 'dadtkzpuzwfows'
+    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
+    # port = '5432'
+    # database = 'd53rn0nsdh7eok'
+    user = 'raymondlow'
+    database_password = 'password123'
+    host = 'localhost'
+    port = '5432'
+    database = 'plug_mate_dev_db'
+    fibaro_address = '172.19.243.58:80'
+    fibaro_username = 'admin'
+    fibaro_password = 'admin'
+
+
+    def activate_remote_control(meter_id, command):
+        query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
+                             auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
+        print(query)
+
+        # return true if device is on, false if device is off
+        return None
+
+
     # Obtain state of all devices from database
+    last_recorded_settings = pd.read_csv('tables_csv/remote_control_setting.csv')
 
-    # Check state of devices from database with csv file
-        # If there are changes, then identify meter id based on device type and user id.
-            # If its from on to off, then switch off device
+    try:
+        # Connect to PostgreSQL database
+        connection = psycopg2.connect(user=user, password=database_password, host=host,
+                                      port=port, database=database)
+        cursor = connection.cursor()
 
-            # Else, switch on device
+        cursor.execute("SELECT * FROM plug_mate_app_remotedata ORDER BY id")
+        query_result = cursor.fetchall()
+        latest_settings = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
+
+        # Check state of devices from database with csv file
+        diff = [(latest_settings.loc[i,'user_id'], latest_settings.loc[i,'device_type'],
+                 latest_settings.loc[i,'device_state'], last_recorded_settings.loc[i,'device_state'])
+                for i in range(len(latest_settings))
+                if latest_settings.loc[i,'device_state'] != last_recorded_settings.loc[i,'device_state']]
+
+        if len(diff) != 0:
+            # Identify meter id based on device type and user id and switch it ON/OFF
+            for user_id, device_type, new_state, previous_state in diff:
+                cursor.execute("".format())
+                meter_id = cursor.fetchone()[0]
+
+                if new_state is True and previous_state is False:
+                    activate_remote_control(meter_id, 'turnOn')
+                elif new_state is False and previous_state is True:
+                    activate_remote_control(meter_id, 'turnOff')
+                else:
+                    raise ValueError('New State: {} | Previous state: {} | Meter id: {}'.format(new_state, previous_state, meter_id))
 
             # Then update CSV file
+            latest_settings.to_csv('tables_csv/remote_control_setting.csv', index=False)
 
-        # Else, do nothing
+        else:
+            pass
+
+    except(Exception, psycopg2.Error) as error:
+        if (connection):
+            print('Error: ', error)
+
+    finally:
+        if (connection):
+            cursor.close()
+            connection.close()
 
     return None
 
@@ -24,14 +89,87 @@ def update_device_state():
     Checks the state of each smart meter from Fibaro and updates the database if there are any changes.
     Checking frequency: 1 minute
     """
+
+    # Database and Fibaro credentials
+    # user = 'dadtkzpuzwfows'
+    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
+    # port = '5432'
+    # database = 'd53rn0nsdh7eok'
+    user = 'raymondlow'
+    database_password = 'password123'
+    host = 'localhost'
+    port = '5432'
+    database = 'plug_mate_dev_db'
+    fibaro_address = '172.19.243.58:80'
+    fibaro_username = 'admin'
+    fibaro_password = 'admin'
+
+
+    def check_meter_state(meter_id):
+        query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
+                             auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
+        print(query)
+
+        # return true if device is on, false if device is off
+        return None
+
+
+    def update_database_device_state(meter_ids, device_states):
+        try:
+            # Connect to PostgreSQL database
+            connection = psycopg2.connect(user=user, password=database_password, host=host,
+                                          port=port, database=database)
+            cursor = connection.cursor()
+
+            for i in range(len(meter_ids)):
+                # Find device type based on meter id
+                cursor.execute("SELECT user_id, device_type FROM power_energy_consumption WHERE meter_id={} "
+                               "ORDER BY unix_time DESC LIMIT 1;".format(meter_ids[i]))
+                user_id, device_type = cursor.fetchone()[0]
+                device_type = device_type.capitalize()
+
+                # Update device state based on user id and device type
+                cursor.execute("UPDATE plug_mate_app_remotedata SET device_state={} WHERE user_id={} AND "
+                               "device_type={}".format(device_states[i], user_id, device_type))
+
+            connection.commit()
+
+        except(Exception, psycopg2.Error) as error:
+            if (connection):
+                print('Error: ', error)
+
+        finally:
+            if (connection):
+                cursor.close()
+                connection.close()
+
+        return None
+
+
     # Access all meter IDS from the database
+    last_recorded_state = pd.read_csv('tables_csv/device_state.csv')
 
     # Check with Fibaro for the device states based on meter IDs
+    latest_state = last_recorded_state['meter_id'].apply(check_meter_state)
 
     # Check if there are any changes to the state of device
-        # If there is a change in state, then update csv file and database
+    assert len(last_recorded_state) == len(latest_state)
+    diff = [(i, latest_state[i]) for i, item in enumerate(last_recorded_state['last_state']) if latest_state[i] != item]
+    index_diff, state_diff = map(list, zip(*diff))
 
-        # Else, do nothing
+    if len(index_diff) != 0:
+        # Update CSV file
+        last_recorded_state['last_state'] = latest_state
+        last_recorded_state.to_csv('tables_csv/device_state.csv', index=False)
+
+        # Update database
+        meter_ids = last_recorded_state.loc[index_diff, 'meter_id'].tolist()
+        assert len(meter_ids) == len(state_diff)
+        update_database_device_state(meter_ids, state_diff)
+
+    else:
+        pass
 
     return None
 
