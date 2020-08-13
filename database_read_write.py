@@ -123,7 +123,7 @@ def get_cumulative_saving(user_id):
     return results
 
 
-def get_energy_points_wallet(user_id):
+def get_energy_points_wallet():
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
         query = f"SELECT * FROM points_wallet"
@@ -132,3 +132,14 @@ def get_energy_points_wallet(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
+
+def get_presence(user_id):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = f"SELECT * FROM presence where user_id = {user_id}"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    return df
+

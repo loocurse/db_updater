@@ -1,5 +1,7 @@
 import database_read_write
 import pandas as pd
+from datetime import datetime
+from random import randint
 
 points = \
 pd.read_csv('/Users/lucasng/Downloads/db_updater/tables_csv/achievements_points.csv', index_col=['achievement'])[
@@ -18,8 +20,33 @@ def _lower_energy_con(user_id):
 def _turn_off_leave(user_id):
     """Achievement: Turn off your plug loads when you leave your desk for a long period of time during the day"""
     # Approach: check if plug loads are switched off when presence is not detected
-    condition = False
-    return points['turn_off_leave'] if condition else 0
+    df = database_read_write.get_energy_ytd_today(user_id)
+    df = df.loc[df['date'] == database_read_write.get_today()]
+    def unix_to_dt(time):
+        time = int(time)
+        return datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')
+    df['datetime'] = pd.to_datetime(df['unix_time'].apply(unix_to_dt))
+
+    # print(df.dtypes)
+    df = df.groupby(pd.Grouper(key='datetime',freq="H")).sum()
+    series1 = df['device_state']
+    df2 = database_read_write.get_presence(user_id)
+    df2 = df2.loc[df2['date'] == database_read_write.get_today()]
+    df2['datetime'] = pd.to_datetime(df2['unix_time'].apply(unix_to_dt))
+    df2 = df2.groupby(pd.Grouper(key='datetime',freq="H")).sum()
+    series2 = df2['presence']
+    # series2 = pd.Series([randint(0,100) for x in range(24)], index=series1.index, name='presence')
+    combined = pd.concat([series1,series2],axis=1)
+    if sum(series2) < 10:
+        return 0
+    change = combined.pct_change()
+    condition = change.loc[(change['presence'] < 0) & (change['device_state'] < 0)]
+    if not condition.empty:
+        return points['turn_off_leave']
+    else:
+        return 0
+
+
 
 
 def _turn_off_end(user_id):
@@ -221,9 +248,3 @@ def add_energy_points_wallet(user_id, points):
     df.at[user_id, 'points'] += points
     df.reset_index(inplace=True)
     database_read_write.update_db(df, 'points_wallet')
-
-# def check_presence(user_id):
-#     df = database_read_write.get_energy_ytd_today(user_id)
-#     df = df.loc[df['date'] == database_read_write.get_today()]
-#     print(df)
-
