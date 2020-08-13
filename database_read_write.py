@@ -2,12 +2,19 @@ from sqlalchemy import create_engine
 import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
-from main import CONNECTION_PARAMS
+
+# from main import CONNECTION_PARAMS
+CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
+                         user='raymondlow',
+                         password='password123',
+                         host='localhost',
+                         port='5432')
 
 engine = create_engine('postgresql://{}:{}@localhost:{}/{}'.format(CONNECTION_PARAMS['user'],
                                                                    CONNECTION_PARAMS['password'],
                                                                    CONNECTION_PARAMS['port'],
                                                                    CONNECTION_PARAMS['database']))
+
 
 def get_entire_table():
     """Reads the SQL database for the entire output and outputs the dataframe with cols stated below"""
@@ -19,6 +26,7 @@ def get_entire_table():
     df = pd.DataFrame(results, columns=colnames)
     df['date'] = pd.to_datetime(df['date'])
     return df
+
 
 def read_all_db():
     """Reads the SQL database for the last 6 months and outputs the dataframe with cols stated below"""
@@ -105,6 +113,7 @@ def get_energy_ytd_today(user_id):
     df = pd.DataFrame(results, columns=colnames)
     return df
 
+
 def get_cumulative_saving(user_id):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
@@ -112,4 +121,25 @@ def get_cumulative_saving(user_id):
         cursor.execute(query)
         results = cursor.fetchone()[0]
     return results
+
+
+def get_energy_points_wallet():
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = f"SELECT * FROM points_wallet"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    return df
+
+def get_presence(user_id):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = f"SELECT * FROM presence where user_id = {user_id}"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    return df
 

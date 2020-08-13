@@ -23,19 +23,14 @@ def initialise_achievements():
 
 
 if __name__ == '__main__':
-    # device_state = pd.read_csv('tables_csv/device_state.csv')
+    schedule.every().hour.do(achievements_update_hourly)
+    schedule.every().hour.do(graph_hourly_update)
+    schedule.every().day.do(achievements_update_daily)
+    schedule.every().day.do(graph_daily_update)
+    schedule.every().sunday.do(graph_weekly_monthly_update)
+    schedule.every().day.at("03:00").do(achievements_check_if_all_devices_off)
 
-    # initialise_achievements()
-    # schedule.every().hour.do(hourly_update)
-    # schedule.every().day.do(daily_update)
-    # schedule.every().sunday.do(weekly_monthly_update)
-    # schedule.every().day.at("03:00").do(check_if_all_devices_off)
-    # update_db(pd.read_csv('achievements_bonus.csv'),'achievements_bonus')
+    while True:
+        schedule.run_pending()
 
-    achievements_update_hourly()
-    achievements_update_daily()
-    achievements_check_if_all_devices_off()
-    graph_hourly_update()
-    graph_weekly_monthly_update()
-    graph_daily_update()
 
