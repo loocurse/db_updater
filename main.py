@@ -32,19 +32,10 @@ if __name__ == '__main__':
     # schedule.every().day.at("03:00").do(check_if_all_devices_off)
     # update_db(pd.read_csv('achievements_bonus.csv'),'achievements_bonus')
 
-    # schedule.every(5).seconds.do()
-
-    # achievements_update_daily()
-    # get_weekly_table()
-    # get_daily_table()
     achievements_update_hourly()
     achievements_update_daily()
+    achievements_check_if_all_devices_off()
     graph_hourly_update()
     graph_weekly_monthly_update()
     graph_daily_update()
-    achievements_check_if_all_devices_off()
-    # check_if_all_devices_off()
-    # update_db(pd.read_csv('achievements_points.csv'), 'achievements_points')
-    # update_db(pd.read_csv('achievements_weekly.csv'), 'achievements_weekly')
-    # update_db(pd.read_csv('achievements_daily.csv'), 'achievements_daily')
 

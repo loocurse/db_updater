@@ -56,6 +56,8 @@ def _complete_daily(user_id):
 def _tree_first(user_id):
     """Achievement: Save your first tree"""
     saved_kwh = database_read_write.get_cumulative_saving(user_id)
+    if saved_kwh == None:
+        return 0
     saved_trees = round(saved_kwh * 0.201 * 0.5)
     condition = saved_trees > 1
     return points['tree_first'] if condition else 0
@@ -64,6 +66,8 @@ def _tree_first(user_id):
 def _tree_fifth(user_id):
     """Achievement: Save your fifth tree"""
     saved_kwh = database_read_write.get_cumulative_saving(user_id)
+    if saved_kwh == None:
+        return 0
     saved_trees = round(saved_kwh * 0.201 * 0.5)
     condition = saved_trees > 5
     return points['tree_fifth'] if condition else 0
@@ -72,6 +76,7 @@ def _tree_fifth(user_id):
 def _tree_tenth(user_id):
     """Achievement: Save your tenth tree"""
     saved_kwh = database_read_write.get_cumulative_saving(user_id)
+    print(user_id)
     saved_trees = round(saved_kwh * 0.201 * 0.5)
     condition = saved_trees > 5
     return points['tree_tenth'] if condition else 0
@@ -104,7 +109,7 @@ def _first_presence(user_id):
     return points['first_presence'] if condition else 0
 
 def _cum_savings(user_id):
-    pass
+    return 0
 
 
 def achievements_update_hourly():
@@ -136,7 +141,7 @@ def achievements_update_daily():
     df_bonus = database_read_write.get_bonus_table()
     user_ids = sorted(df_weekly['user_id'].unique())
     output_weekly = pd.DataFrame()
-    output_monthly = pd.DataFrame()
+    output_bonus = pd.DataFrame()
     for user_id in user_ids:
         # Weekly
         user_df = df_weekly.loc[df_weekly.user_id == user_id].copy().reset_index(drop=True)
@@ -163,10 +168,10 @@ def achievements_update_daily():
             else:
                 updated_output.append(True)
         user_df.loc[0, 'tree_first':'cum_savings'] = updated_output
-        output_monthly = pd.concat([output_monthly, user_df], ignore_index=True)
+        output_bonus = pd.concat([output_bonus, user_df], ignore_index=True)
 
     database_read_write.update_db(output_weekly, 'achievements_weekly')
-    database_read_write.update_db(output_monthly, 'achievements_monthly')
+    database_read_write.update_db(output_bonus, 'achievements_bonus')
 
 
 def achievements_check_if_all_devices_off():

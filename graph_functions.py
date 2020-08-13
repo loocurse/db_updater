@@ -3,7 +3,7 @@ import datetime as dt
 from datetime import datetime
 import dateutil.relativedelta
 import copy
-
+pd.set_option('mode.chained_assignment', None)
 from database_read_write import *
 
 
@@ -402,7 +402,7 @@ def graph_hourly_update():
 
     update_db(hourly_line.reset_index(drop=True), 'historical_today_line')
     update_db(hourly_pie.reset_index(drop=True), 'historical_today_pie')
-    print('Complete hourly update in {} seconds.'.format(datetime.now() - start_time))
+    # print('Complete hourly update in {} seconds.'.format(datetime.now() - start_time))
 
 
 def graph_daily_update():
