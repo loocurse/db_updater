@@ -9,17 +9,78 @@ def check_remote_control():
     Checks the database for the device state and detect if remote control is activated.
     Checking frequency: 5 seconds
     """
+
+    # Database and Fibaro credentials
+    # user = 'dadtkzpuzwfows'
+    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
+    # port = '5432'
+    # database = 'd53rn0nsdh7eok'
+    user = 'raymondlow'
+    database_password = 'password123'
+    host = 'localhost'
+    port = '5432'
+    database = 'plug_mate_dev_db'
+    fibaro_address = '172.19.243.58:80'
+    fibaro_username = 'admin'
+    fibaro_password = 'admin'
+
+
+    def activate_remote_control(meter_id, command):
+        query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
+                             auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
+        print(query)
+
+        # return true if device is on, false if device is off
+        return None
+
+
     # Obtain state of all devices from database
+    last_recorded_settings = pd.read_csv('tables_csv/remote_control_setting.csv')
 
-    # Check state of devices from database with csv file
-        # If there are changes, then identify meter id based on device type and user id.
-            # If its from on to off, then switch off device
+    try:
+        # Connect to PostgreSQL database
+        connection = psycopg2.connect(user=user, password=database_password, host=host,
+                                      port=port, database=database)
+        cursor = connection.cursor()
 
-            # Else, switch on device
+        cursor.execute("SELECT * FROM plug_mate_app_remotedata ORDER BY id")
+        query_result = cursor.fetchall()
+        latest_settings = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
+
+        # Check state of devices from database with csv file
+        diff = [(latest_settings.loc[i,'user_id'], latest_settings.loc[i,'device_type'],
+                 latest_settings.loc[i,'device_state'], last_recorded_settings.loc[i,'device_state'])
+                for i in range(len(latest_settings))
+                if latest_settings.loc[i,'device_state'] != last_recorded_settings.loc[i,'device_state']]
+
+        if len(diff) != 0:
+            # Identify meter id based on device type and user id and switch it ON/OFF
+            for user_id, device_type, new_state, previous_state in diff:
+                cursor.execute("".format())
+                meter_id = cursor.fetchone()[0]
+
+                if new_state is True and previous_state is False:
+                    activate_remote_control(meter_id, 'turnOn')
+                elif new_state is False and previous_state is True:
+                    activate_remote_control(meter_id, 'turnOff')
+                else:
+                    raise ValueError('New State: {} | Previous state: {} | Meter id: {}'.format(new_state, previous_state, meter_id))
 
             # Then update CSV file
+            latest_settings.to_csv('tables_csv/remote_control_setting.csv', index=False)
 
-        # Else, do nothing
+        else:
+            pass
+
+    except(Exception, psycopg2.Error) as error:
+        if (connection):
+            print('Error: ', error)
+
+    finally:
+        if (connection):
+            cursor.close()
+            connection.close()
 
     return None
 
@@ -76,7 +137,7 @@ def update_device_state():
 
         except(Exception, psycopg2.Error) as error:
             if (connection):
-                print('Error: Failed to extract meter id or insert record or connect to database.', error)
+                print('Error: ', error)
 
         finally:
             if (connection):
