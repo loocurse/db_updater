@@ -1,7 +1,9 @@
 import database_read_write
 import pandas as pd
 
-points = pd.read_csv('/Users/lucasng/Downloads/db_updater/tables_csv/achievements_points.csv', index_col=['achievement'])['points'].to_dict()
+points = \
+pd.read_csv('/Users/lucasng/Downloads/db_updater/tables_csv/achievements_points.csv', index_col=['achievement'])[
+    'points'].to_dict()
 
 
 def _lower_energy_con(user_id):
@@ -76,7 +78,6 @@ def _tree_fifth(user_id):
 def _tree_tenth(user_id):
     """Achievement: Save your tenth tree"""
     saved_kwh = database_read_write.get_cumulative_saving(user_id)
-    print(user_id)
     saved_trees = round(saved_kwh * 0.201 * 0.5)
     condition = saved_trees > 5
     return points['tree_tenth'] if condition else 0
@@ -108,6 +109,7 @@ def _first_presence(user_id):
     condition = False
     return points['first_presence'] if condition else 0
 
+
 def _cum_savings(user_id):
     return 0
 
@@ -123,8 +125,11 @@ def achievements_update_hourly():
         ls = user_df.loc[today]['lower_energy_con':'turn_off_end'].to_list()
         updated_output = []
         for num, status in enumerate(ls):
-            if not status:  # if task not yet met, check if task met
-                updated_output.append(daily_functions[num](user_id))
+            if status == 0:  # if task not yet met, check if task met
+                earned_points = daily_functions[num](user_id)
+                updated_output.append(earned_points)
+                if earned_points > 0:
+                    add_energy_points_wallet(user_id, earned_points)
             else:
                 updated_output.append(status)
         updated_output.append(points['complete_daily']) if all(updated_output) else updated_output.append(0)
@@ -149,10 +154,13 @@ def achievements_update_daily():
         updated_output = []
         weekly_functions = (_cost_saving, _schedule_based, _complete_daily)
         for num, status in enumerate(ls):
-            if not status:
-                updated_output.append(weekly_functions[num](user_id))
+            if status == 0:
+                earned_points = weekly_functions[num](user_id)
+                updated_output.append(earned_points)
+                if earned_points > 0:
+                    add_energy_points_wallet(user_id, earned_points)
             else:
-                updated_output.append(True)
+                updated_output.append(status)
         updated_output.append(points['complete_weekly']) if all(updated_output) else updated_output.append(0)
         user_df.loc[0, 'cost_saving':'complete_weekly'] = updated_output
         output_weekly = pd.concat([output_weekly, user_df], ignore_index=True)
@@ -161,10 +169,15 @@ def achievements_update_daily():
         user_df = df_bonus.loc[df_bonus.user_id == user_id].copy().reset_index(drop=True)
         ls = user_df.loc[0]['tree_first':'cum_savings'].to_list()
         updated_output = []
-        bonus_functions = (_tree_first,_tree_fifth,_tree_tenth,_redeem_reward,_first_remote,_first_schedule,_first_presence,_cum_savings)
+        bonus_functions = (
+        _tree_first, _tree_fifth, _tree_tenth, _redeem_reward, _first_remote, _first_schedule, _first_presence,
+        _cum_savings)
         for num, status in enumerate(ls):
             if not status:
-                updated_output.append(bonus_functions[num](user_id))
+                earned_points = bonus_functions[num](user_id)
+                updated_output.append(earned_points)
+                if earned_points > 0:
+                    add_energy_points_wallet(user_id, earned_points)
             else:
                 updated_output.append(True)
         user_df.loc[0, 'tree_first':'cum_savings'] = updated_output
@@ -191,12 +204,26 @@ def achievements_check_if_all_devices_off():
         # Get ID of user
         index = df.index[(df['user_id'] == user_id) & (df['week_day'] == today.strftime('%a'))]
         if devices_off:
-            df.at[index,'turn_off_end'] = 10
+            df.at[index, 'turn_off_end'] = 10
 
     # Send to DB
 
     df.reset_index(drop=True, inplace=True)
-    df.reset_index(drop=False,inplace=True)
-    df.rename(columns={'index':'id'}, inplace=True)
+    df.reset_index(drop=False, inplace=True)
+    df.rename(columns={'index': 'id'}, inplace=True)
 
     database_read_write.update_db(df, 'achievements_daily', index_to_col=False)
+
+
+def add_energy_points_wallet(user_id, points):
+    df = database_read_write.get_energy_points_wallet(user_id)
+    df.set_index('user_id', inplace=True)
+    df.at[user_id, 'points'] += points
+    df.reset_index(inplace=True)
+    database_read_write.update_db(df, 'points_wallet')
+
+# def check_presence(user_id):
+#     df = database_read_write.get_energy_ytd_today(user_id)
+#     df = df.loc[df['date'] == database_read_write.get_today()]
+#     print(df)
+
