@@ -7,8 +7,10 @@ points = pd.read_csv('/Users/lucasng/Downloads/db_updater/tables_csv/achievement
 def _lower_energy_con(user_id):
     """Achievement: Clock a lower energy consumption than yesterday"""
     df = database_read_write.get_energy_ytd_today(user_id)
-    list = df.groupby(by='date').sum()['power'].to_list()
-    return points['lower_energy_con'] if list[0] > list[1] else 0
+    ls = df.groupby(by='date').sum()['power'].to_list()
+    if not ls:
+        return 0
+    return points['lower_energy_con'] if ls[0] > ls[1] else 0
 
 
 def _turn_off_leave(user_id):
@@ -29,6 +31,8 @@ def _cost_saving(user_id):
     week_view = database_read_write.read_cost_savings()
     week_view_user = week_view[week_view.user_id == user_id]
     list = week_view_user['total'][-2:].to_list()
+    if not list:
+        return 0
     return points['cost_saving'] if list[1] > list[0] else 0
 
 
@@ -99,6 +103,9 @@ def _first_presence(user_id):
     condition = False
     return points['first_presence'] if condition else 0
 
+def _cum_savings(user_id):
+    pass
+
 
 def achievements_update_hourly():
     df = database_read_write.get_daily_table()
@@ -117,7 +124,7 @@ def achievements_update_hourly():
                 updated_output.append(status)
         updated_output.append(points['complete_daily']) if all(updated_output) else updated_output.append(0)
         # Replace information
-        user_df.at[today, 'lower_energy_con':'complete_all'] = updated_output
+        user_df.at[today, 'lower_energy_con':'complete_all_daily'] = updated_output
         output = pd.concat([output, user_df])
     # Send to DB
     output.reset_index(inplace=True)
@@ -125,11 +132,14 @@ def achievements_update_hourly():
 
 
 def achievements_update_daily():
-    df = database_read_write.get_weekly_table()
-    user_ids = sorted(df['user_id'].unique())
-    output = pd.DataFrame()
+    df_weekly = database_read_write.get_weekly_table()
+    df_bonus = database_read_write.get_bonus_table()
+    user_ids = sorted(df_weekly['user_id'].unique())
+    output_weekly = pd.DataFrame()
+    output_monthly = pd.DataFrame()
     for user_id in user_ids:
-        user_df = df.loc[df.user_id == user_id].copy().reset_index(drop=True)
+        # Weekly
+        user_df = df_weekly.loc[df_weekly.user_id == user_id].copy().reset_index(drop=True)
         ls = user_df.loc[0]['cost_saving':'complete_daily'].to_list()
         updated_output = []
         weekly_functions = (_cost_saving, _schedule_based, _complete_daily)
@@ -140,14 +150,30 @@ def achievements_update_daily():
                 updated_output.append(True)
         updated_output.append(points['complete_weekly']) if all(updated_output) else updated_output.append(0)
         user_df.loc[0, 'cost_saving':'complete_weekly'] = updated_output
-        output = pd.concat([output, user_df], ignore_index=True)
-    database_read_write.update_db(output, 'achievements_weekly')
+        output_weekly = pd.concat([output_weekly, user_df], ignore_index=True)
 
-def check_if_all_devices_off():
+        # Bonus
+        user_df = df_bonus.loc[df_bonus.user_id == user_id].copy().reset_index(drop=True)
+        ls = user_df.loc[0]['tree_first':'cum_savings'].to_list()
+        updated_output = []
+        bonus_functions = (_tree_first,_tree_fifth,_tree_tenth,_redeem_reward,_first_remote,_first_schedule,_first_presence,_cum_savings)
+        for num, status in enumerate(ls):
+            if not status:
+                updated_output.append(bonus_functions[num](user_id))
+            else:
+                updated_output.append(True)
+        user_df.loc[0, 'tree_first':'cum_savings'] = updated_output
+        output_monthly = pd.concat([output_monthly, user_df], ignore_index=True)
+
+    database_read_write.update_db(output_weekly, 'achievements_weekly')
+    database_read_write.update_db(output_monthly, 'achievements_monthly')
+
+
+def achievements_check_if_all_devices_off():
     today = database_read_write.get_today()
     df = database_read_write.get_daily_table()
     df['week_day'] = df.index
-    df.set_index('id',inplace=True,append=True)
+    df.set_index('id', inplace=True, append=True)
     user_ids = sorted(df['user_id'].unique())
     for user_id in user_ids:
         # Check if devices are all turned off

@@ -2,12 +2,12 @@ from sqlalchemy import create_engine
 import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
-# from main import CONNECTION_PARAMS
-CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
-                         user='raymondlow',
-                         password='password123',
-                         host='localhost',
-                         port='5432')
+from main import CONNECTION_PARAMS
+# CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
+#                          user='raymondlow',
+#                          password='password123',
+#                          host='localhost',
+#                          port='5432')
 engine = create_engine('postgresql://{}:{}@localhost:{}/{}'.format(CONNECTION_PARAMS['user'],
                                                                    CONNECTION_PARAMS['password'],
                                                                    CONNECTION_PARAMS['port'],
@@ -41,7 +41,9 @@ def read_all_db():
 def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
-    df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
+    print(df.columns)
+    print('\n\n')
+    # df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
 def read_cost_savings():
@@ -70,6 +72,16 @@ def get_weekly_table():
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM achievements_weekly")
+        colnames = [desc[0] for desc in cursor.description]
+        results = cursor.fetchall()
+    return pd.DataFrame(results, columns=colnames)
+
+
+def get_bonus_table():
+    """Extracts the achievements_weekly table"""
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM achievements_bonus")
         colnames = [desc[0] for desc in cursor.description]
         results = cursor.fetchall()
     return pd.DataFrame(results, columns=colnames)
@@ -105,5 +117,3 @@ def get_cumulative_saving(user_id):
         results = cursor.fetchone()[0]
     return results
 
-if __name__ == '__main__':
-    get_cumulative_saving(1)
