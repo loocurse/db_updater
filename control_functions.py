@@ -13,27 +13,24 @@ def check_remote_control():
     """
 
     # Database and Fibaro credentials
-    # user = 'dadtkzpuzwfows'
-    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
-    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
-    # port = '5432'
-    # database = 'd53rn0nsdh7eok'
-    user = 'raymondlow'
-    database_password = 'password123'
-    host = 'localhost'
+    user = 'dadtkzpuzwfows'
+    database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
     port = '5432'
-    database = 'plug_mate_dev_db'
+    database = 'd53rn0nsdh7eok'
+    # user = 'raymondlow'
+    # database_password = 'password123'
+    # host = 'localhost'
+    # port = '5432'
+    # database = 'plug_mate_dev_db'
     fibaro_address = '172.19.243.58:80'
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
 
     def activate_remote_control(meter_id, command):
-        # query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
-        #                      auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
-        # print(query)
-
-        # return true if device is on, false if device is off
+        query = requests.get('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
+                             auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
 
 
@@ -87,6 +84,7 @@ def check_remote_control():
 
     return None
 
+
 def update_device_state():
     """
     Checks the state of each smart meter from Fibaro and updates the database if there are any changes.
@@ -94,16 +92,16 @@ def update_device_state():
     """
 
     # Database and Fibaro credentials
-    # user = 'dadtkzpuzwfows'
-    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
-    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
-    # port = '5432'
-    # database = 'd53rn0nsdh7eok'
-    user = 'raymondlow'
-    database_password = 'password123'
-    host = 'localhost'
+    user = 'dadtkzpuzwfows'
+    database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
     port = '5432'
-    database = 'plug_mate_dev_db'
+    database = 'd53rn0nsdh7eok'
+    # user = 'raymondlow'
+    # database_password = 'password123'
+    # host = 'localhost'
+    # port = '5432'
+    # database = 'plug_mate_dev_db'
     fibaro_address = '172.19.243.58:80'
     fibaro_username = 'admin'
     fibaro_password = 'admin'
@@ -112,10 +110,12 @@ def update_device_state():
     def check_meter_state(meter_id):
         query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
                              auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
-        print(query)
-
-        # return true if device is on, false if device is off
-        return None
+        if query['properties']['value'] == 'true':
+            return True
+        elif query['properties']['value'] == 'false':
+            return False
+        else:
+            raise ValueError('Unknown value for device state: {}'.format(query['properties']['value']))
 
 
     def update_database_device_state(meter_ids, device_states):
@@ -185,27 +185,24 @@ def schedule_control():
     """
 
     # Database and Fibaro credentials
-    # user = 'dadtkzpuzwfows'
-    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
-    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
-    # port = '5432'
-    # database = 'd53rn0nsdh7eok'
-    user = 'raymondlow'
-    database_password = 'password123'
-    host = 'localhost'
+    user = 'dadtkzpuzwfows'
+    database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
     port = '5432'
-    database = 'plug_mate_dev_db'
+    database = 'd53rn0nsdh7eok'
+    # user = 'raymondlow'
+    # database_password = 'password123'
+    # host = 'localhost'
+    # port = '5432'
+    # database = 'plug_mate_dev_db'
     fibaro_address = '172.19.243.58:80'
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
 
     def activate_remote_control(meter_id, command):
-        # query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
-        #                      auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
-        # print(query)
-
-        # return true if device is on, false if device is off
+        query = requests.get('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
+                             auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
 
 
@@ -273,27 +270,24 @@ def check_user_arrival():
     """
 
     # Database and Fibaro credentials
-    # user = 'dadtkzpuzwfows'
-    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
-    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
-    # port = '5432'
-    # database = 'd53rn0nsdh7eok'
-    user = 'raymondlow'
-    database_password = 'password123'
-    host = 'localhost'
+    user = 'dadtkzpuzwfows'
+    database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
     port = '5432'
-    database = 'plug_mate_dev_db'
+    database = 'd53rn0nsdh7eok'
+    # user = 'raymondlow'
+    # database_password = 'password123'
+    # host = 'localhost'
+    # port = '5432'
+    # database = 'plug_mate_dev_db'
     fibaro_address = '172.19.243.58:80'
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
 
     def activate_remote_control(meter_id, command):
-        # query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
-        #                      auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
-        # print(query)
-
-        # return true if device is on, false if device is off
+        query = requests.get('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
+                             auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
 
 
@@ -359,27 +353,26 @@ def check_user_departure():
     """
 
     # Database and Fibaro credentials
-    # user = 'dadtkzpuzwfows'
-    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
-    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
-    # port = '5432'
-    # database = 'd53rn0nsdh7eok'
-    user = 'raymondlow'
-    database_password = 'password123'
-    host = 'localhost'
+    user = 'dadtkzpuzwfows'
+    database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
     port = '5432'
-    database = 'plug_mate_dev_db'
+    database = 'd53rn0nsdh7eok'
+    # user = 'raymondlow'
+    # database_password = 'password123'
+    # host = 'localhost'
+    # port = '5432'
+    # database = 'plug_mate_dev_db'
     fibaro_address = '172.19.243.58:80'
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
-    def activate_remote_control(meter_id, command):
-        # query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
-        #                      auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
-        # print(query)
 
-        # return true if device is on, false if device is off
+    def activate_remote_control(meter_id, command):
+        query = requests.get('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
+                             auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
+
 
     def check_device(index, device_type):
         if last_recorded_presence.loc[index, 'control_activated_{}'.format(device_type)] is False:
