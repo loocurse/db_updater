@@ -243,8 +243,10 @@ def achievements_check_if_all_devices_off():
 
 
 def add_energy_points_wallet(user_id, points):
-    df = database_read_write.get_energy_points_wallet(user_id)
+    """Adds energy points to user"""
+    df = database_read_write.get_energy_points_wallet()
     df.set_index('user_id', inplace=True)
     df.at[user_id, 'points'] += points
     df.reset_index(inplace=True)
+    df = df[['id','user_id','points']]
     database_read_write.update_db(df, 'points_wallet')

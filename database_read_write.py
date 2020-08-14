@@ -124,6 +124,7 @@ def get_cumulative_saving(user_id):
 
 
 def get_energy_points_wallet():
+    """Read the database and return a dataframe of all the energy points from users"""
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
         query = f"SELECT * FROM points_wallet"
