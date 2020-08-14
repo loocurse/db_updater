@@ -2,7 +2,8 @@ import psycopg2
 import pandas as pd
 import requests
 from requests.auth import HTTPBasicAuth
-from datetime import datetime
+from datatime import datetime
+import time
 
 
 def check_remote_control():
@@ -208,7 +209,7 @@ def schedule_control():
         return None
 
 
-    def check_schedule(state):
+    def check_schedule(schedules, current_time, day_of_week, state):
         if state == 'On':
             event_column = 'event_start'
         else:
@@ -250,8 +251,8 @@ def schedule_control():
         day_of_week = datetime.today().strftime('%A')
 
         # Check schedule to see if any devices needs to be switched ON/OFF
-        check_schedule('On')
-        check_scheduld('Off')
+        check_schedule(schedules, current_time, day_of_week, 'On')
+        check_scheduld(schedules, current_time, day_of_week, 'Off')
 
     except(Exception, psycopg2.Error) as error:
         if (connection):
@@ -270,12 +271,83 @@ def check_user_arrival():
     Checks the arrival of each user to his desk and switch ON his devices.
     Checking frequency: 5 seconds
     """
-    # Obtain the presence information of all users from database
 
-    # Check users' presence with csv file
-        # If user's presence has changed from not around to around, then switch on all devices and update csv file
+    # Database and Fibaro credentials
+    # user = 'dadtkzpuzwfows'
+    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
+    # port = '5432'
+    # database = 'd53rn0nsdh7eok'
+    user = 'raymondlow'
+    database_password = 'password123'
+    host = 'localhost'
+    port = '5432'
+    database = 'plug_mate_dev_db'
+    fibaro_address = '172.19.243.58:80'
+    fibaro_username = 'admin'
+    fibaro_password = 'admin'
 
-        # Else, do nothing
+
+    def activate_remote_control(meter_id, command):
+        # query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
+        #                      auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
+        # print(query)
+
+        # return true if device is on, false if device is off
+        return None
+
+
+    # Access last recorded user presence information
+    last_recorded_presence = pd.read_csv('tables_csv/user_presence.csv')
+
+    try:
+        # Connect to PostgreSQL database
+        connection = psycopg2.connect(user=user, password=database_password, host=host,
+                                      port=port, database=database)
+        cursor = connection.cursor()
+
+        # Obtain the latest presence information of all users from database
+        cursor.execute("SELECT p.user_id, p.presence, p.unix_time FROM presence p "
+                       "INNER JOIN (SELECT user_id, MAX(unix_time) AS LatestTime "
+                       "FROM presence GROUP BY user_id) pp  ON p.user_id = pp.user_id AND p.unix_time = pp.LatestTime "
+                       "ORDER BY user_id")
+        query_result = cursor.fetchall()
+        latest_presence = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
+
+        # Obtain user id of user who just arrived at his desk
+        assert len(last_recorded_presence) == len(latest_presence)
+        arrival_ids = [i for i in range(len(last_recorded_presence))
+                       if last_recorded_presence.loc[i, 'presence'] == 0 and latest_presence.loc[i, 'presence'] == 1]
+
+        if len(arrival_ids) != 0:
+            # Switch on all devices owned by the arriving user
+            for index in arrival_ids:
+                cursor.execute("SELECT meter_id FROM meters WHERE user_id={}".format(last_recorded_presence.loc[index, 'user_id']))
+                meter_ids = cursor.fetchall()
+                for meter_id in meter_ids:
+                    activate_remote_control(meter_id, 'turnOn')
+
+                # Reset the control activated trackers for different devices
+                last_recorded_presence.loc[index, 'control_activated_desktop'] = False
+                last_recorded_presence.loc[index, 'control_activated_laptop'] = False
+                last_recorded_presence.loc[index, 'control_activated_monitor'] = False
+                last_recorded_presence.loc[index, 'control_activated_tasklamp'] = False
+                last_recorded_presence.loc[index, 'control_activated_fan'] = False
+
+            last_recorded_presence['presence'] = latest_presence['presence']
+            last_recorded_presence.to_csv('tables_csv/user_presence.csv', index=False)
+
+        else:
+            pass
+
+    except(Exception, psycopg2.Error) as error:
+        if (connection):
+            print('Error: ', error)
+
+    finally:
+        if (connection):
+            cursor.close()
+            connection.close()
 
     return None
 
@@ -285,13 +357,114 @@ def check_user_departure():
     Checks the departure of the user from his desk and switches OFF his devices
     Checking frequency: 1 minute
     """
-    # Obtain the presence information of all users from database
 
-    # If a user is not around and his devices are ON, obtain his presence information for the last X minutes and check if he is around
-        # If he is not around for the past X minutes, then switch off device
+    # Database and Fibaro credentials
+    # user = 'dadtkzpuzwfows'
+    # database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    # host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
+    # port = '5432'
+    # database = 'd53rn0nsdh7eok'
+    user = 'raymondlow'
+    database_password = 'password123'
+    host = 'localhost'
+    port = '5432'
+    database = 'plug_mate_dev_db'
+    fibaro_address = '172.19.243.58:80'
+    fibaro_username = 'admin'
+    fibaro_password = 'admin'
 
-        # Else, do nothing
+    def activate_remote_control(meter_id, command):
+        # query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
+        #                      auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
+        # print(query)
 
-    # Else, do nothing
+        # return true if device is on, false if device is off
+        return None
+
+    def check_device(index, device_type):
+        if last_recorded_presence.loc[index, 'control_activated_{}'.format(device_type)] is False:
+            # Query for time interval before device should be remotely switched off
+            cursor.execute("SELECT presence_setting FROM plug_mate_app_presencedata "
+                           "WHERE user_id={} AND device_type={}".format(last_recorded_presence.loc[index, 'user_id'],
+                                                                         device_type.capitalize()))
+            time_interval = cursor.fetchone()[0]
+
+            if time.time() - last_recorded_presence.loc[index, 'last_detected_departure'] > time_interval * 60:
+                cursor.execute(
+                    "SELECT meter_id FROM power_energy_consumption WHERE user_id={} AND device_type={} ORDER BY unix_time DESC LIMIT 1".format())
+                meter_ids = cursor.fetchall()
+                for meter_id in meter_ids:
+                    activate_remote_control(meter_id, 'turnOff')
+
+                last_recorded_presence.loc[i, 'control_activated_{}'.format(device_type)] = True
+
+            else:
+                pass
+        else:
+            pass
+
+        return None
+
+
+    # Access last recorded user presence information
+    last_recorded_presence = pd.read_csv('tables_csv/user_presence.csv')
+
+    try:
+        # Connect to PostgreSQL database
+        connection = psycopg2.connect(user=user, password=database_password, host=host,
+                                      port=port, database=database)
+        cursor = connection.cursor()
+
+        # Obtain the latest presence information of all users from database
+        cursor.execute("SELECT p.user_id, p.presence, p.unix_time FROM presence p "
+                       "INNER JOIN (SELECT user_id, MAX(unix_time) AS LatestTime "
+                       "FROM presence GROUP BY user_id) pp  ON p.user_id = pp.user_id AND p.unix_time = pp.LatestTime "
+                       "ORDER BY user_id")
+        query_result = cursor.fetchall()
+        latest_presence = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
+
+        # Obtain user id of user who has just left his desk and update last detected departure
+        assert len(last_recorded_presence) == len(latest_presence)
+        update = [(last_recorded_presence.loc[i, 'user_id'], latest_presence.loc[i,'unix_time'])
+                  for i in range(len(last_recorded_presence))
+                  if last_recorded_presence.loc[i, 'presence'] == 1 and latest_presence.loc[i, 'presence'] == 0]
+
+        if len(update) != 0:
+            # Update user_presence of user's departure time
+            for user_id, unix_time in update:
+                update_index = last_recorded_presence['user_id'].tolist().index(user_id)
+                last_recorded_presence.loc[update_index, 'presence'] = 0
+                last_recorded_presence.loc[update_index, 'last_detected_departure'] = unix_time
+
+        else:
+            pass
+
+        # Obtain user id and device type of user who has left his desk for a period longer the duration indicated
+        # in the presence based control
+        users_absent_index = [i for i in range(len(last_recorded_presence))
+                              if last_recorded_presence.loc[i, 'presence'] == 0 and
+                              (last_recorded_presence.loc[i, 'control_activated_desktop'] is False or
+                               last_recorded_presence.loc[i, 'control_activated_laptop'] is False or
+                               last_recorded_presence.loc[i, 'control_activated_monitor'] is False or
+                               last_recorded_presence.loc[i, 'control_activated_tasklamp'] is False or
+                               last_recorded_presence.loc[i, 'control_activated_fan'] is False)]
+
+        for index in users_absent_index:
+            check_device(index, 'desktop')
+            check_device(index, 'laptop')
+            check_device(index, 'monitor')
+            check_device(index, 'tasklamp')
+            check_device(index, 'fan')
+
+        last_recorded_presence.to_csv('tables_csv/user_presence.csv', index=False)
+
+    except(Exception, psycopg2.Error) as error:
+        if (connection):
+            print('Error: ', error)
+
+    finally:
+        if (connection):
+            cursor.close()
+            connection.close()
 
     return None
