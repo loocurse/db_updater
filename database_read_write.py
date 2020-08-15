@@ -16,10 +16,11 @@ CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
                          port='5432')
 
-engine = create_engine('postgresql://{}:{}@localhost:{}/{}'.format(CONNECTION_PARAMS['user'],
-                                                                   CONNECTION_PARAMS['password'],
-                                                                   CONNECTION_PARAMS['port'],
-                                                                   CONNECTION_PARAMS['database']))
+engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(CONNECTION_PARAMS['user'],
+                                                            CONNECTION_PARAMS['password'],
+                                                            CONNECTION_PARAMS['host'],
+                                                            CONNECTION_PARAMS['port'],
+                                                            CONNECTION_PARAMS['database']))
 
 
 def get_entire_table():

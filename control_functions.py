@@ -2,7 +2,7 @@ import psycopg2
 import pandas as pd
 import requests
 from requests.auth import HTTPBasicAuth
-from datatime import datetime
+from datetime import datetime
 import time
 
 
