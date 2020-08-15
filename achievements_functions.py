@@ -3,9 +3,7 @@ import pandas as pd
 from datetime import datetime
 from random import randint
 
-points = \
-pd.read_csv('/Users/lucasng/Downloads/db_updater/tables_csv/achievements_points.csv', index_col=['achievement'])[
-    'points'].to_dict()
+points = pd.read_csv('tables_csv/achievements_points.csv', index_col=['achievement'])['points'].to_dict()
 
 
 def _lower_energy_con(user_id):
