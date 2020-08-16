@@ -392,9 +392,6 @@ def _cumulative_savings(user_id):
     trees = round(cost/2,2)
     return kwh, cost, trees
 
-if __name__ == '__main__':
-    print(_cumulative_savings(pd.read_csv('tables_csv/generator_6m.csv')))
-
 
 def graph_hourly_update():
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating hourly consumption')
