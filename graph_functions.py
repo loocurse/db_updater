@@ -1,6 +1,5 @@
 import pandas as pd
 import datetime as dt
-from datetime import datetime
 import dateutil.relativedelta
 import copy
 pd.set_option('mode.chained_assignment', None)
@@ -358,7 +357,11 @@ def _cost_savings(df):
     month_view['month'] = month_view.index
     month_view['month'] = month_view['month'].dt.strftime('%b')
     # month_view = month_view.set_index('month')
-    return week_view[-7:-1], month_view[-7:-1]
+    # print(month_view.shape)
+    if month_view.shape[0] < 3:
+        return week_view[-7:-1], month_view
+    else:
+        return week_view[-7:-1], month_view[-7:-1]
 
 def _cumulative_savings(user_id):
     """Calculates the cumulative savings and uploads the value to the database"""
