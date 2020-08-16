@@ -42,7 +42,8 @@ def _initialise_variables(df):
 def _weekFunction(df):
     global df_week_pie, df_week, df_week_random
     df = _initialise_variables(df)
-    end_date = '24/7/2020'
+    # end_date = '24/7/2020'
+    end_date = str(datetime.today().strftime('%d/%-m/%Y'))
 
     # Start of week function
 
@@ -136,7 +137,8 @@ def _weekFunction(df):
 
 
 def _hourFunction(df):
-    end_date = '24/7/2020'
+    # end_date = '24/7/2020'
+    end_date = str(datetime.today().strftime('%d/%-m/%Y'))
     df = _initialise_variables(df)
 
     global df_hour_pie, df_hour
@@ -150,7 +152,11 @@ def _hourFunction(df):
 
     df_hour['date'] = pd.to_datetime(df_hour['date'])
     end = end_date  # String of todays date
-    end = dt.datetime.strptime(end, '%d/%m/%Y')
+    end = dt.datetime.strptime(end_date, '%d/%m/%Y')
+    print(end_date)
+    print(type(end_date))
+    print(end)
+
     mask = (df_hour['date'] == end)
 
     # Delete these row indexes from dataFrame
@@ -198,7 +204,8 @@ def _hourFunction(df):
 
 
 def _dayFunction(df):
-    end_date = '24/7/2020'
+    # end_date = '24/7/2020'
+    end_date = str(datetime.today().strftime('%d/%-m/%Y'))
     df = _initialise_variables(df)
 
     global df_day, df_day_pie
@@ -255,7 +262,8 @@ def _dayFunction(df):
 
 def _monthFunction(df):
     global df_month, df_month_pie
-    end_date = '24/07/2020'
+    # end_date = '24/07/2020'
+    end_date = str(datetime.today().strftime('%d/%-m/%Y'))
     df = _initialise_variables(df)
 
     # START OF MONTH FUNCTION
