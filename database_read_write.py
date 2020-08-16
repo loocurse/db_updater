@@ -40,8 +40,8 @@ def read_all_db():
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM power_energy_consumption "
-                       "WHERE date >= date_trunc('month', now()) - interval '6 month' AND "
-                       "date < date_trunc('month', now())")
+                       "WHERE date >= date_trunc('hour', now()) - interval '6 month' AND "
+                       "date < date_trunc('hour', now())")
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
@@ -101,7 +101,8 @@ def get_bonus_table():
 def get_today():
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT MAX(date) AS max_date FROM power_energy_consumption")
+        cursor.execute(
+            "SELECT MAX(date) AS max_date FROM power_energy_consumption")
         latest_date = cursor.fetchall()[0][0]
     return latest_date
 
@@ -141,6 +142,7 @@ def get_energy_points_wallet():
     df = pd.DataFrame(results, columns=colnames)
     return df
 
+
 def get_presence(user_id):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
@@ -150,4 +152,3 @@ def get_presence(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
-

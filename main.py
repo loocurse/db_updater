@@ -9,6 +9,11 @@ import schedule
 #                          password='password123',
 #                          host='localhost',
 #                          port='5432')
+# CONNECTION_PARAMS = dict(database='postgres',
+#                          user='postgres',
+#                          password='123456',
+#                          host='localhost',
+#                          port='5432')
 
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
@@ -19,7 +24,8 @@ CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
 
 def initialise_achievements():
     """Run this function every week to reset all achievements achieved"""
-    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Resetting all achievements')
+    print(
+        f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Resetting all achievements')
     df_daily = get_daily_table()
     df_weekly = get_weekly_table()
     df_daily.loc[:, 'lower_energy_con':'complete_all'] = False
@@ -49,10 +55,6 @@ if __name__ == '__main__':
     # while True:
     #     schedule.run_pending()
 
-    graph_hourly_update()
+    # graph_hourly_update()
     graph_daily_update()
-    graph_weekly_monthly_update()
-
-
-
-
+    # graph_weekly_monthly_update()

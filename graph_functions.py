@@ -1,10 +1,12 @@
+from database_read_write import *
 import pandas as pd
 import datetime as dt
 from datetime import datetime
 import dateutil.relativedelta
 import copy
+from datetime import date
+
 pd.set_option('mode.chained_assignment', None)
-from database_read_write import *
 
 
 def _initialise_variables(df):
@@ -78,7 +80,7 @@ def _weekFunction(df):
     # idx = df.index[df['BoolCol']] # Search for indexes of value in column
     # df.loc[idx] # Get rows with all the columns
     df_week_random.loc[(df_week_random['date'] > start) & (
-            df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
+        df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
     df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(7))) &
                        (df_week_random['date'] <= (end - dt.timedelta(7))), ['week']] = "{}".format(
         (start - dt.timedelta(7)).strftime('%d %b'))
@@ -154,9 +156,6 @@ def _hourFunction(df):
     df_hour['date'] = pd.to_datetime(df_hour['date'])
     end = end_date  # String of todays date
     end = dt.datetime.strptime(end_date, '%d/%m/%Y')
-    print(end_date)
-    print(type(end_date))
-    print(end)
 
     mask = (df_hour['date'] == end)
 
@@ -205,11 +204,16 @@ def _hourFunction(df):
 
 
 def _dayFunction(df):
-    # end_date = '24/7/2020'
-    end_date = str(datetime.today().strftime('%d/%-m/%Y'))
-    df = _initialise_variables(df)
-
     global df_day, df_day_pie
+
+    # end_date = '24/7/2020'
+    # end_date = str(datetime.today().strftime('%d/%-m/%Y'))
+    df = _initialise_variables(df)
+    today = date.today()
+
+    end = today.strftime("%d/%m/%Y")
+    end = dt.datetime.strptime(end, '%d/%m/%Y')
+    print(end)
     # Start of Day function
     # Line Chart
 
@@ -219,16 +223,17 @@ def _dayFunction(df):
     # Get last 7 days
     # Get names of indexes for which column Date only has values 7 days before end_date
     df_day['date'] = pd.to_datetime(df_day['date'])
-    end = end_date
-    end = dt.datetime.strptime(end, '%d/%m/%Y')
+    # end = end_date
+    # end = dt.datetime.strptime(end, '%d/%m/%Y')
     start = end - dt.timedelta(7)
     mask = (df_day['date'] > start) & (df_day['date'] <= end)
     # Delete these row indexes from dataFrame
     df_day = df_day.loc[mask]
+    print(df_day)
     df_day.reset_index(drop=True, inplace=True)
 
     # Create df for Piechart
-    df_day_pie = df_day
+    df_day_pie = copy.deepcopy(df_day)
 
     # Aggregate data
 
@@ -282,7 +287,7 @@ def _monthFunction(df):
         end, '%d/%m/%Y').replace(day=1)
 
     start = end_first_day_date - \
-            dateutil.relativedelta.relativedelta(months=5)
+        dateutil.relativedelta.relativedelta(months=5)
 
     mask = (df_month['date'] > start) & (df_month['date'] <= end)
 
@@ -291,7 +296,7 @@ def _monthFunction(df):
     df_month.reset_index(drop=True, inplace=True)
 
     # Create df_month_pie for Piechart
-    df_month_pie = df_month
+    df_month_pie = copy.deepcopy(df_month)
 
     # Aggregate Data into Months based on last 6 months
     aggregation_functions = {'power': 'sum', 'time': 'first',
@@ -368,6 +373,7 @@ def _cost_savings(df):
     # month_view = month_view.set_index('month')
     return week_view[-7:-1], month_view[-7:-1]
 
+
 def _cumulative_savings(user_id):
     """Calculates the cumulative savings and uploads the value to the database"""
     df = get_entire_table()
@@ -377,7 +383,7 @@ def _cumulative_savings(user_id):
     # week_view = week_view.apply(_calculate_cost)
     total_savings = 0
     # print('hello')
-    for num,item in enumerate(week_view.tolist()):
+    for num, item in enumerate(week_view.tolist()):
         avg = sum(week_view.tolist()[:num])/(num+1)
         # print(item)
         saving = avg - item
@@ -385,16 +391,18 @@ def _cumulative_savings(user_id):
         if saving > 0:
             total_savings += saving
     kwh = round(total_savings / 1000, 3)
-    cost = round(_calculate_cost(total_savings),2)
-    trees = round(cost/2,2)
+    cost = round(_calculate_cost(total_savings), 2)
+    trees = round(cost/2, 2)
     return kwh, cost, trees
+
 
 if __name__ == '__main__':
     print(_cumulative_savings(pd.read_csv('tables_csv/generator_6m.csv')))
 
 
 def graph_hourly_update():
-    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating hourly consumption')
+    print(
+        f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating hourly consumption')
     start_time = datetime.now()
     df = read_all_db()
     hourly_line = pd.DataFrame()
@@ -402,7 +410,8 @@ def graph_hourly_update():
     user_ids = sorted(df['user_id'].unique())
 
     for user_id in user_ids:
-        line_data, pie_data = _hourFunction(df[df['user_id'] == user_id].reset_index(drop=True))
+        line_data, pie_data = _hourFunction(
+            df[df['user_id'] == user_id].reset_index(drop=True))
         line_data.insert(0, 'user_id', user_id)
         pie_data.insert(0, 'user_id', user_id)
         hourly_line = pd.concat([hourly_line, line_data], ignore_index=True)
@@ -414,7 +423,8 @@ def graph_hourly_update():
 
 
 def graph_daily_update():
-    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating daily consumption')
+    print(
+        f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating daily consumption')
     start_time = datetime.now()
     df = read_all_db()
     daily_line = pd.DataFrame()
@@ -422,7 +432,8 @@ def graph_daily_update():
     user_ids = sorted(df['user_id'].unique())
 
     for user_id in user_ids:
-        line_data, pie_data = _dayFunction(df[df['user_id'] == user_id].reset_index(drop=True))
+        line_data, pie_data = _dayFunction(
+            df[df['user_id'] == user_id].reset_index(drop=True))
         line_data.insert(0, 'user_id', user_id)
         pie_data.insert(0, 'user_id', user_id)
         daily_line = pd.concat([daily_line, line_data], ignore_index=True)
@@ -430,7 +441,8 @@ def graph_daily_update():
 
     update_db(daily_line.reset_index(drop=True), 'historical_days_line')
     update_db(daily_pie.reset_index(drop=True), 'historical_days_pie')
-    print('Complete daily update in {} seconds.'.format(datetime.now() - start_time))
+    print('Complete daily update in {} seconds.'.format(
+        datetime.now() - start_time))
 
 
 def graph_weekly_monthly_update():
@@ -460,11 +472,14 @@ def graph_weekly_monthly_update():
         monthly_line = pd.concat([monthly_line, line_month], ignore_index=True)
         monthly_pie = pd.concat([monthly_pie, pie_month], ignore_index=True)
 
-        savings_week, savings_month = _cost_savings(df[df['user_id'] == user_id].reset_index(drop=True))
+        savings_week, savings_month = _cost_savings(
+            df[df['user_id'] == user_id].reset_index(drop=True))
         savings_week.insert(0, 'user_id', user_id)
         savings_month.insert(0, 'user_id', user_id)
-        weekly_costsavings = pd.concat([weekly_costsavings, savings_week], ignore_index=True)
-        monthly_costsavings = pd.concat([monthly_costsavings, savings_month], ignore_index=True)
+        weekly_costsavings = pd.concat(
+            [weekly_costsavings, savings_week], ignore_index=True)
+        monthly_costsavings = pd.concat(
+            [monthly_costsavings, savings_month], ignore_index=True)
 
     update_db(weekly_line.reset_index(drop=True), 'historical_weeks_line')
     update_db(weekly_pie.reset_index(drop=True), 'historical_weeks_pie')
@@ -472,4 +487,5 @@ def graph_weekly_monthly_update():
     update_db(monthly_pie.reset_index(drop=True), 'historical_months_pie')
     update_db(weekly_costsavings.reset_index(drop=True), 'costsavings_weeks')
     update_db(monthly_costsavings.reset_index(drop=True), 'costsavings_months')
-    print('Completed weekly and monthly update in {} seconds.'.format(datetime.now() - start_time))
+    print('Completed weekly and monthly update in {} seconds.'.format(
+        datetime.now() - start_time))
