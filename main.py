@@ -46,15 +46,18 @@ if __name__ == '__main__':
     # schedule.every().day.at("03:00").do(achievements_check_if_all_devices_off)
     #
     # # Update control features
-    # schedule.every(5).second.do(check_remote_control)
-    # schedule.every().minute.do(update_device_state)
-    # schedule.every(15).minute.do(schedule_control)
-    # schedule.every(5).second.do(check_user_arrival)
-    # schedule.every().minute.do()
-    #
+    # schedule.every(5).seconds.do(check_remote_control)
+    # schedule.every().minutes.do(update_device_state)
+    # schedule.every(15).minutes.do(schedule_control)
+    # schedule.every(5).seconds.do(check_user_arrival)
+    # schedule.every().minutes.do(check_user_departure)
+
     # while True:
     #     schedule.run_pending()
 
     # graph_hourly_update()
     # graph_daily_update()
-    graph_weekly_monthly_update()
+    # graph_weekly_monthly_update()
+
+    # check_remote_control()
+    update_device_state()
