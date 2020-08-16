@@ -56,5 +56,5 @@ if __name__ == '__main__':
     #     schedule.run_pending()
 
     # graph_hourly_update()
-    graph_daily_update()
-    # graph_weekly_monthly_update()
+    # graph_daily_update()
+    graph_weekly_monthly_update()
