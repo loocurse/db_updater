@@ -27,15 +27,14 @@ def check_remote_control():
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
-
     def activate_remote_control(meter_id, command):
         query = requests.get('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
                              auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
 
-
     # Obtain state of all devices from database
-    last_recorded_settings = pd.read_csv('tables_csv/remote_control_setting.csv')
+    last_recorded_settings = pd.read_csv(
+        'tables_csv/remote_control_setting.csv')
 
     try:
         # Connect to PostgreSQL database
@@ -45,13 +44,14 @@ def check_remote_control():
 
         cursor.execute("SELECT * FROM plug_mate_app_remotedata ORDER BY id")
         query_result = cursor.fetchall()
-        latest_settings = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
+        latest_settings = pd.DataFrame(
+            query_result, columns=[desc[0] for desc in cursor.description])
 
         # Check state of devices from database with csv file
-        diff = [(latest_settings.loc[i,'user_id'], latest_settings.loc[i,'device_type'],
-                 latest_settings.loc[i,'device_state'], last_recorded_settings.loc[i,'device_state'])
+        diff = [(latest_settings.loc[i, 'user_id'], latest_settings.loc[i, 'device_type'],
+                 latest_settings.loc[i, 'device_state'], last_recorded_settings.loc[i, 'device_state'])
                 for i in range(len(latest_settings))
-                if latest_settings.loc[i,'device_state'] != last_recorded_settings.loc[i,'device_state']]
+                if latest_settings.loc[i, 'device_state'] != last_recorded_settings.loc[i, 'device_state']]
 
         if len(diff) != 0:
             # Identify meter id based on device type and user id and switch it ON/OFF
@@ -65,10 +65,12 @@ def check_remote_control():
                 elif new_state is False and previous_state is True:
                     activate_remote_control(meter_id, 'turnOff')
                 else:
-                    raise ValueError('New State: {} | Previous state: {} | Meter id: {}'.format(new_state, previous_state, meter_id))
+                    raise ValueError('New State: {} | Previous state: {} | Meter id: {}'.format(
+                        new_state, previous_state, meter_id))
 
             # Then update CSV file
-            latest_settings.to_csv('tables_csv/remote_control_setting.csv', index=False)
+            latest_settings.to_csv(
+                'tables_csv/remote_control_setting.csv', index=False)
 
         else:
             pass
@@ -83,6 +85,37 @@ def check_remote_control():
             connection.close()
 
     return None
+
+
+def get_remote_state(user_id):
+
+    # Database and Fibaro credentials
+    user = 'dadtkzpuzwfows'
+    database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
+    host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
+    port = '5432'
+    database = 'd53rn0nsdh7eok'
+    # user = 'raymondlow'
+    # database_password = 'password123'
+    # host = 'localhost'
+    # port = '5432'
+    # database = 'plug_mate_dev_db'
+    fibaro_address = '172.19.243.58:80'
+    fibaro_username = 'admin'
+    fibaro_password = 'admin'
+    # Connect to PostgreSQL database
+    connection = psycopg2.connect(user=user, password=database_password, host=host,
+                                  port=port, database=database)
+    cursor = connection.cursor()
+
+    cursor.execute(
+        "SELECT device_state FROM plug_mate_app_remotedata WHERE user_id={}".format(user_id))
+    results = cursor.fetchall()
+    colnames = [desc[0] for desc in cursor.description]
+
+    df = pd.DataFrame(results, columns=colnames)
+    device_state = df['device_state'].to_list()
+    return device_state
 
 
 def update_device_state():
@@ -106,7 +139,6 @@ def update_device_state():
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
-
     def check_meter_state(meter_id):
         query = requests.get('http://{}/api/devices/{}'.format(fibaro_address, meter_id),
                              auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
@@ -115,8 +147,8 @@ def update_device_state():
         elif query['properties']['value'] == 'false':
             return False
         else:
-            raise ValueError('Unknown value for device state: {}'.format(query['properties']['value']))
-
+            raise ValueError('Unknown value for device state: {}'.format(
+                query['properties']['value']))
 
     def update_database_device_state(meter_ids, device_states):
         try:
@@ -149,7 +181,6 @@ def update_device_state():
 
         return None
 
-
     # Access all meter IDS from the database
     last_recorded_state = pd.read_csv('tables_csv/device_state.csv')
 
@@ -158,7 +189,8 @@ def update_device_state():
 
     # Check if there are any changes to the state of device
     assert len(last_recorded_state) == len(latest_state)
-    diff = [(i, latest_state[i]) for i, item in enumerate(last_recorded_state['last_state']) if latest_state[i] != item]
+    diff = [(i, latest_state[i]) for i, item in enumerate(
+        last_recorded_state['last_state']) if latest_state[i] != item]
     index_diff, state_diff = map(list, zip(*diff))
 
     if len(index_diff) != 0:
@@ -199,12 +231,10 @@ def schedule_control():
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
-
     def activate_remote_control(meter_id, command):
         query = requests.get('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
                              auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
-
 
     def check_schedule(schedules, current_time, day_of_week, state):
         if state == 'On':
@@ -230,7 +260,6 @@ def schedule_control():
             for meter_id in meter_ids:
                 activate_remote_control(meter_id, command)
 
-
     # Obtain the schedule for all users and device types
     try:
         # Connect to PostgreSQL database
@@ -241,7 +270,8 @@ def schedule_control():
         # Obtain schedules from database
         cursor.execute("SELECT * FROM plug_mate_app_scheduledata")
         query_result = cursor.fetchall()
-        schedules = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
+        schedules = pd.DataFrame(query_result, columns=[
+                                 desc[0] for desc in cursor.description])
 
         # Check if the starting time of any schedule matches with the current time
         current_time = datetime.today().strftime('%H:%M')
@@ -284,12 +314,10 @@ def check_user_arrival():
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
-
     def activate_remote_control(meter_id, command):
         query = requests.get('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
                              auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
-
 
     # Access last recorded user presence information
     last_recorded_presence = pd.read_csv('tables_csv/user_presence.csv')
@@ -306,7 +334,8 @@ def check_user_arrival():
                        "FROM presence GROUP BY user_id) pp  ON p.user_id = pp.user_id AND p.unix_time = pp.LatestTime "
                        "ORDER BY user_id")
         query_result = cursor.fetchall()
-        latest_presence = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
+        latest_presence = pd.DataFrame(
+            query_result, columns=[desc[0] for desc in cursor.description])
 
         # Obtain user id of user who just arrived at his desk
         assert len(last_recorded_presence) == len(latest_presence)
@@ -316,20 +345,27 @@ def check_user_arrival():
         if len(arrival_ids) != 0:
             # Switch on all devices owned by the arriving user
             for index in arrival_ids:
-                cursor.execute("SELECT meter_id FROM meters WHERE user_id={}".format(last_recorded_presence.loc[index, 'user_id']))
+                cursor.execute("SELECT meter_id FROM meters WHERE user_id={}".format(
+                    last_recorded_presence.loc[index, 'user_id']))
                 meter_ids = cursor.fetchall()
                 for meter_id in meter_ids:
                     activate_remote_control(meter_id, 'turnOn')
 
                 # Reset the control activated trackers for different devices
-                last_recorded_presence.loc[index, 'control_activated_desktop'] = False
-                last_recorded_presence.loc[index, 'control_activated_laptop'] = False
-                last_recorded_presence.loc[index, 'control_activated_monitor'] = False
-                last_recorded_presence.loc[index, 'control_activated_tasklamp'] = False
-                last_recorded_presence.loc[index, 'control_activated_fan'] = False
+                last_recorded_presence.loc[index,
+                                           'control_activated_desktop'] = False
+                last_recorded_presence.loc[index,
+                                           'control_activated_laptop'] = False
+                last_recorded_presence.loc[index,
+                                           'control_activated_monitor'] = False
+                last_recorded_presence.loc[index,
+                                           'control_activated_tasklamp'] = False
+                last_recorded_presence.loc[index,
+                                           'control_activated_fan'] = False
 
             last_recorded_presence['presence'] = latest_presence['presence']
-            last_recorded_presence.to_csv('tables_csv/user_presence.csv', index=False)
+            last_recorded_presence.to_csv(
+                'tables_csv/user_presence.csv', index=False)
 
         else:
             pass
@@ -367,19 +403,17 @@ def check_user_departure():
     fibaro_username = 'admin'
     fibaro_password = 'admin'
 
-
     def activate_remote_control(meter_id, command):
         query = requests.get('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
                              auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
-
 
     def check_device(index, device_type):
         if last_recorded_presence.loc[index, 'control_activated_{}'.format(device_type)] is False:
             # Query for time interval before device should be remotely switched off
             cursor.execute("SELECT presence_setting FROM plug_mate_app_presencedata "
                            "WHERE user_id={} AND device_type={}".format(last_recorded_presence.loc[index, 'user_id'],
-                                                                         device_type.capitalize()))
+                                                                        device_type.capitalize()))
             time_interval = cursor.fetchone()[0]
 
             if time.time() - last_recorded_presence.loc[index, 'last_detected_departure'] > time_interval * 60:
@@ -389,7 +423,8 @@ def check_user_departure():
                 for meter_id in meter_ids:
                     activate_remote_control(meter_id, 'turnOff')
 
-                last_recorded_presence.loc[i, 'control_activated_{}'.format(device_type)] = True
+                last_recorded_presence.loc[i, 'control_activated_{}'.format(
+                    device_type)] = True
 
             else:
                 pass
@@ -397,7 +432,6 @@ def check_user_departure():
             pass
 
         return None
-
 
     # Access last recorded user presence information
     last_recorded_presence = pd.read_csv('tables_csv/user_presence.csv')
@@ -414,20 +448,23 @@ def check_user_departure():
                        "FROM presence GROUP BY user_id) pp  ON p.user_id = pp.user_id AND p.unix_time = pp.LatestTime "
                        "ORDER BY user_id")
         query_result = cursor.fetchall()
-        latest_presence = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
+        latest_presence = pd.DataFrame(
+            query_result, columns=[desc[0] for desc in cursor.description])
 
         # Obtain user id of user who has just left his desk and update last detected departure
         assert len(last_recorded_presence) == len(latest_presence)
-        update = [(last_recorded_presence.loc[i, 'user_id'], latest_presence.loc[i,'unix_time'])
+        update = [(last_recorded_presence.loc[i, 'user_id'], latest_presence.loc[i, 'unix_time'])
                   for i in range(len(last_recorded_presence))
                   if last_recorded_presence.loc[i, 'presence'] == 1 and latest_presence.loc[i, 'presence'] == 0]
 
         if len(update) != 0:
             # Update user_presence of user's departure time
             for user_id, unix_time in update:
-                update_index = last_recorded_presence['user_id'].tolist().index(user_id)
+                update_index = last_recorded_presence['user_id'].tolist().index(
+                    user_id)
                 last_recorded_presence.loc[update_index, 'presence'] = 0
-                last_recorded_presence.loc[update_index, 'last_detected_departure'] = unix_time
+                last_recorded_presence.loc[update_index,
+                                           'last_detected_departure'] = unix_time
 
         else:
             pass
@@ -449,7 +486,8 @@ def check_user_departure():
             check_device(index, 'tasklamp')
             check_device(index, 'fan')
 
-        last_recorded_presence.to_csv('tables_csv/user_presence.csv', index=False)
+        last_recorded_presence.to_csv(
+            'tables_csv/user_presence.csv', index=False)
 
     except(Exception, psycopg2.Error) as error:
         if (connection):
