@@ -66,7 +66,9 @@ def _cost_saving(user_id):
 def _schedule_based(user_id):
     """DONE BY MIRABEL
     Achievement: Set next week's schedule-based controls"""
-    condition = False
+    schedules = database_read_write.get_schedules(user_id)
+    number_of_schedules = len(schedules)
+    condition = number_of_schedules > 0
     return points['schedule_based'] if condition else 0
 
 
