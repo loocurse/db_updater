@@ -1,26 +1,26 @@
-"id","user_id","device_type","device_state"
-1,1,"Desktop",True
-2,1,"Laptop",False
-3,1,"Monitor",True
-5,1,"Fan",True
-4,1,"Task Lamp",True
-6,2,"Desktop",True
-7,2,"Laptop",True
-8,2,"Monitor",True
-9,2,"Task Lamp",True
-10,2,"Fan",True
-11,3,"Desktop",True
-12,3,"Laptop",True
-13,3,"Monitor",True
-14,3,"Task Lamp",True
-15,3,"Fan",True
-16,4,"Desktop",True
-17,4,"Laptop",True
-18,4,"Monitor",True
-19,4,"Task Lamp",True
-20,4,"Fan",True
-25,5,"Fan",True
-24,5,"Task Lamp",True
-23,5,"Monitor",True
-22,5,"Laptop",True
-21,5,"Desktop",True
+id,user_id,device_type,device_state
+1,1,Desktop,False
+2,1,Laptop,True
+3,1,Monitor,True
+4,1,Task Lamp,False
+5,1,Fan,False
+6,2,Desktop,True
+7,2,Laptop,True
+8,2,Monitor,True
+9,2,Task Lamp,False
+10,2,Fan,False
+11,3,Desktop,False
+12,3,Laptop,True
+13,3,Monitor,True
+14,3,Task Lamp,False
+15,3,Fan,False
+16,4,Desktop,False
+17,4,Laptop,True
+18,4,Monitor,True
+19,4,Task Lamp,False
+20,4,Fan,False
+21,5,Desktop,True
+22,5,Laptop,True
+23,5,Monitor,True
+24,5,Task Lamp,False
+25,5,Fan,False

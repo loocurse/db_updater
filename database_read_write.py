@@ -4,11 +4,11 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 # from main import CONNECTION_PARAMS
-# CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
-#                          user='raymondlow',
-#                          password='password123',
-#                          host='localhost',
-#                          port='5432')
+CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
+                         user='raymondlow',
+                         password='password123',
+                         host='localhost',
+                         port='5432')
 
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
@@ -147,6 +147,16 @@ def get_presence(user_id):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
         query = f"SELECT * FROM presence where user_id = {user_id}"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    return df
+
+def get_schedules(user_id):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = f"SELECT * FROM plug_mate_app_scheduledata where user_id = {user_id}"
         cursor.execute(query)
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]

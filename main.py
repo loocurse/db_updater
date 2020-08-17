@@ -4,16 +4,6 @@ from database_read_write import *
 from control_functions import *
 import schedule
 
-# CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
-#                          user='raymondlow',
-#                          password='password123',
-#                          host='localhost',
-#                          port='5432')
-# CONNECTION_PARAMS = dict(database='postgres',
-#                          user='postgres',
-#                          password='123456',
-#                          host='localhost',
-#                          port='5432')
 
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
@@ -35,26 +25,22 @@ def initialise_achievements():
 
 
 if __name__ == '__main__':
-    # # Update dashboard
-    # schedule.every().hour.do(graph_hourly_update)
-    # schedule.every().day.do(graph_daily_update)
-    # schedule.every().sunday.do(graph_weekly_monthly_update)
-    #
-    # # Update achievements
-    # schedule.every().hour.do(achievements_update_hourly)
-    # schedule.every().day.do(achievements_update_daily)
-    # schedule.every().day.at("03:00").do(achievements_check_if_all_devices_off)
-    #
-    # # Update control features
-    # schedule.every(5).second.do(check_remote_control)
-    # schedule.every().minute.do(update_device_state)
-    # schedule.every(15).minute.do(schedule_control)
-    # schedule.every(5).second.do(check_user_arrival)
-    # schedule.every().minute.do()
-    #
-    # while True:
-    #     schedule.run_pending()
+    # Update dashboard
+    schedule.every().hour.do(graph_hourly_update)
+    schedule.every().day.do(graph_daily_update)
+    schedule.every().sunday.do(graph_weekly_monthly_update)
 
-    # graph_hourly_update()
-    # graph_daily_update()
-    graph_weekly_monthly_update()
+    # Update achievements
+    schedule.every().hour.do(achievements_update_hourly)
+    schedule.every().day.do(achievements_update_daily)
+    schedule.every().day.at("03:00").do(achievements_check_if_all_devices_off)
+
+    # Update control features
+    schedule.every(5).seconds.do(check_remote_control)
+    schedule.every().minutes.do(update_device_state)
+    schedule.every(15).minutes.do(schedule_control)
+    schedule.every(5).seconds.do(check_user_arrival)
+    schedule.every().minutes.do(check_user_departure)
+
+    while True:
+        schedule.run_pending()
