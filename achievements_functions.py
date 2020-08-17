@@ -20,33 +20,7 @@ def _lower_energy_con(user_id):
 
 def _turn_off_leave(user_id):
     """Achievement: Turn off your plug loads when you leave your desk for a long period of time during the day"""
-    df = database_read_write.get_energy_ytd_today(user_id)
-    df = df.loc[df['date'] == database_read_write.get_today()]
-
-    def unix_to_dt(time):
-        time = int(time)
-        return datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')
-
-    df['datetime'] = pd.to_datetime(df['unix_time'].apply(unix_to_dt))
-
-    # print(df.dtypes)
-    df = df.groupby(pd.Grouper(key='datetime', freq="H")).sum()
-    series1 = df['device_state']
-    df2 = database_read_write.get_presence(user_id)
-    df2 = df2.loc[df2['date'] == database_read_write.get_today()]
-    df2['datetime'] = pd.to_datetime(df2['unix_time'].apply(unix_to_dt))
-    df2 = df2.groupby(pd.Grouper(key='datetime', freq="H")).sum()
-    series2 = df2['presence']
-    combined = pd.concat([series1, series2], axis=1)
-    if sum(series2) < 10:
-        return 0
-    change = combined.pct_change()
-    # TODO change to another table
-    condition = change.loc[(change['presence'] < 0) & (change['device_state'] < 0)]
-    if not condition.empty:
-        return points['turn_off_leave']
     # Approach: check if plug loads are switched off when presence is not detected
-    device_state_list = []
     device_state_list = control_functions.get_remote_state(user_id)
 
     if True not in device_state_list:
@@ -65,24 +39,43 @@ def _turn_off_leave(user_id):
         else:
             return 0
 
+    else:
+        return 0
+
 
 def _turn_off_end(user_id):
     """Achievement: Turn off your plug loads during at the end of the day"""
-    today = database_read_write.get_today()
-    df = database_read_write.get_daily_table()
-    df['week_day'] = df.index
-    df.set_index('id', inplace=True, append=True)
-    # Check if devices are all turned off
-    df2 = database_read_write.get_energy_ytd_today(user_id)
-    df2['date'] = pd.to_datetime(df2['date'])
-    df2['datetime'] = pd.to_datetime(df2['date'].astype(str) + " " + df2['time'].astype(str))
-    df2 = df2.loc[(df2['date'].dt.date == today) & (df2['datetime'].dt.hour == 3)]
-    devices_off = df2['device_state'].sum() == 0
+    # today = database_read_write.get_today()
+    # df = database_read_write.get_daily_table()
+    # df['week_day'] = df.index
+    # df.set_index('id', inplace=True, append=True)
+    # # Check if devices are all turned off
+    # df2 = database_read_write.get_energy_ytd_today(user_id)
+    # df2['date'] = pd.to_datetime(df2['date'])
+    # df2['datetime'] = pd.to_datetime(df2['date'].astype(str) + " " + df2['time'].astype(str))
+    # df2 = df2.loc[(df2['date'].dt.date == today) & (df2['datetime'].dt.hour == 3)]
+    # devices_off = df2['device_state'].sum() == 0
 
     # Get ID of user
-    index = df.index[(df['user_id'] == user_id) & (df['week_day'] == today.strftime('%a'))]
-    if devices_off:
-        df.at[index, 'turn_off_end'] = 10
+    device_state_list = control_functions.get_remote_state(user_id)
+    # if any(device_state_list):
+    #     return 0
+
+    df = database_read_write.get_presence(user_id)
+    def unix_to_dt(time):
+        time = int(time)
+        return datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')
+
+    df['datetime'] = pd.to_datetime(df['unix_time'].apply(unix_to_dt))
+    df = df.loc[df['datetime'] >= pd.to_datetime(
+        database_read_write.get_today())]
+    if sum(df['presence']) < 0:
+        return 0
+    else:
+        return points['turn_off_end']
+
+if __name__ == '__main__':
+    _turn_off_end(1)
 
 
 def _cost_saving(user_id):
