@@ -4,11 +4,11 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 # from main import CONNECTION_PARAMS
-# CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
-#                          user='raymondlow',
-#                          password='password123',
-#                          host='localhost',
-#                          port='5432')
+CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
+                         user='raymondlow',
+                         password='password123',
+                         host='localhost',
+                         port='5432')
 
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
