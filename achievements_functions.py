@@ -33,7 +33,6 @@ def _turn_off_leave(user_id):
     df2['datetime'] = pd.to_datetime(df2['unix_time'].apply(unix_to_dt))
     df2 = df2.groupby(pd.Grouper(key='datetime',freq="H")).sum()
     series2 = df2['presence']
-    # series2 = pd.Series([randint(0,100) for x in range(24)], index=series1.index, name='presence')
     combined = pd.concat([series1,series2],axis=1)
     if sum(series2) < 10:
         return 0
