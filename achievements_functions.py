@@ -73,9 +73,9 @@ def _turn_off_end(user_id):
         return 0
     else:
         return points['turn_off_end']
-
-if __name__ == '__main__':
-    _turn_off_end(1)
+#
+# if __name__ == '__main__':
+#     _turn_off_end(1)
 
 
 def _cost_saving(user_id):
