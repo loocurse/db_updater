@@ -8,6 +8,7 @@ points = pd.read_csv('tables_csv/achievements_points.csv', index_col=['achieveme
 
 def _lower_energy_con(user_id):
     """Achievement: Clock a lower energy consumption than yesterday"""
+    # TODO detect at the end of the day
     df = database_read_write.get_energy_ytd_today(user_id)
     ls = df.groupby(by='date').sum()['power'].to_list()
     if not ls:
@@ -38,13 +39,12 @@ def _turn_off_leave(user_id):
     if sum(series2) < 10:
         return 0
     change = combined.pct_change()
+    # TODO change to another table
     condition = change.loc[(change['presence'] < 0) & (change['device_state'] < 0)]
     if not condition.empty:
         return points['turn_off_leave']
     else:
         return 0
-
-
 
 
 def _turn_off_end(user_id):
@@ -55,6 +55,7 @@ def _turn_off_end(user_id):
 
 def _cost_saving(user_id):
     """Achievement: Clock a higher cost savings than last week"""
+    # TODO adjust name, read at the end of the week
     week_view = database_read_write.read_cost_savings()
     week_view_user = week_view[week_view.user_id == user_id]
     list = week_view_user['total'][-2:].to_list()
@@ -72,8 +73,10 @@ def _schedule_based(user_id):
 
 def _complete_daily(user_id):
     """Achievement: Complete all daily achievements for 4 days of the week"""
-    if database_read_write.get_today() not in ['Thu', 'Fri', 'Sat']:
-        return False
+    # TODO turn off checking on sat
+    # TODO remove daily table from daily achievements on weekends
+    if database_read_write.get_today() not in ['Thu', 'Fri']:
+        return 0
     else:
         df = database_read_write.get_daily_table()
         df = df.loc[df.user_id == user_id]
