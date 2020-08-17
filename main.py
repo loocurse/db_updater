@@ -31,22 +31,21 @@ def initialise_achievements():
 
 if __name__ == '__main__':
     # Update dashboard
-    # schedule.every().hour.do(graph_hourly_update)
-    # schedule.every().day.do(graph_daily_update)
-    # schedule.every().sunday.do(graph_weekly_monthly_update)
-    #
-    # # Update achievements
-    # schedule.every().hour.do(achievements_update_hourly)
-    # schedule.every().day.do(achievements_update_daily)
-    # schedule.every().day.at("03:00").do(achievements_check_if_all_devices_off)
-    #
-    # # Update control features
-    # schedule.every(5).seconds.do(check_remote_control)
-    # schedule.every().minutes.do(update_device_state)
-    # schedule.every(15).minutes.do(schedule_control)
-    # schedule.every(5).seconds.do(check_user_arrival)
-    # schedule.every().minutes.do(check_user_departure)
-    #
-    # while True:
-    #     schedule.run_pending()
-    graph_weekly_monthly_update()
+    schedule.every().hour.do(graph_hourly_update)
+    schedule.every().day.do(graph_daily_update)
+    schedule.every().sunday.do(graph_weekly_monthly_update)
+
+    # Update achievements
+    schedule.every().hour.do(achievements_update_hourly)
+    schedule.every().day.do(achievements_update_daily)
+    schedule.every().day.at("03:00").do(achievements_check_if_all_devices_off)
+
+    # Update control features
+    schedule.every(5).seconds.do(check_remote_control)
+    schedule.every().minutes.do(update_device_state)
+    schedule.every(15).minutes.do(schedule_control)
+    schedule.every(5).seconds.do(check_user_arrival)
+    schedule.every().minutes.do(check_user_departure)
+
+    while True:
+        schedule.run_pending()
