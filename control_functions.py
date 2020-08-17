@@ -318,7 +318,7 @@ def check_user_arrival():
                 last_recorded_presence.loc[index, 'control_activated_laptop'] = False
                 last_recorded_presence.loc[index, 'control_activated_monitor'] = False
                 last_recorded_presence.loc[index, 'control_activated_tasklamp'] = False
-                last_recorded_presence.loc[index, 'control_activated_fan'] = True
+                last_recorded_presence.loc[index, 'control_activated_fan'] = False
 
             last_recorded_presence['presence'] = latest_presence['presence']
             last_recorded_presence.to_csv('tables_csv/user_presence.csv', index=False)
@@ -358,21 +358,14 @@ def check_user_departure():
     def activate_remote_control(meter_id, command):
         query = requests.post('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
                               auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
-        print(query)
         return None
 
 
     def check_device(index, device_type):
-        print(index)
-        print(device_type)
-        print(last_recorded_presence.loc[index, 'control_activated_{}'.format(device_type)])
-
         if device_type == 'tasklamp':
             processed_device_type = 'Task Lamp'
         else:
             processed_device_type = device_type.capitalize()
-
-        print(processed_device_type)
 
         if last_recorded_presence.loc[index, 'control_activated_{}'.format(device_type)] is np.bool_(False):
             # Query for time interval before device should be remotely switched off
@@ -380,17 +373,12 @@ def check_user_departure():
                            "WHERE user_id={} AND device_type='{}'".format(last_recorded_presence.loc[index, 'user_id'],
                                                                          processed_device_type))
             time_interval = cursor.fetchone()[0]
-            print(time_interval)
-            print(last_recorded_presence.loc[index, 'last_detected_departure'])
-            print(time.time() - last_recorded_presence.loc[index, 'last_detected_departure'])
 
             if time.time() - last_recorded_presence.loc[index, 'last_detected_departure'] > time_interval * 60.0:
                 cursor.execute(
                     "SELECT meter_id FROM power_energy_consumption WHERE user_id={} AND device_type='{}' "
-                    "ORDER BY unix_time DESC LIMIT 1".format(last_recorded_presence.loc[index, 'user_id'],
-                                                                         processed_device_type))
+                    "ORDER BY unix_time DESC LIMIT 1".format(last_recorded_presence.loc[index, 'user_id'], device_type))
                 meter_ids = cursor.fetchall()
-                print(meter_ids)
                 for meter_id in meter_ids:
                     activate_remote_control(meter_id[0], 'turnOff')
 
@@ -420,15 +408,12 @@ def check_user_departure():
                        "ORDER BY user_id")
         query_result = cursor.fetchall()
         latest_presence = pd.DataFrame(query_result, columns=[desc[0] for desc in cursor.description])
-        print(latest_presence)
 
         # Obtain user id of user who has just left his desk and update last detected departure
         assert len(last_recorded_presence) == len(latest_presence)
-        update = [(last_recorded_presence.loc[i, 'user_id'], latest_presence.loc[i,'unix_time'])
+        update = [(last_recorded_presence.loc[i, 'user_id'], latest_presence.loc[i, 'unix_time'])
                   for i in range(len(last_recorded_presence))
                   if last_recorded_presence.loc[i, 'presence'] == 1 and latest_presence.loc[i, 'presence'] == 0]
-
-        print(update)
 
         if len(update) != 0:
             # Update user_presence of user's departure time
@@ -436,8 +421,6 @@ def check_user_departure():
                 update_index = last_recorded_presence['user_id'].tolist().index(user_id)
                 last_recorded_presence.loc[update_index, 'presence'] = 0
                 last_recorded_presence.loc[update_index, 'last_detected_departure'] = unix_time
-
-            print(last_recorded_presence)
 
         else:
             pass
@@ -451,8 +434,6 @@ def check_user_departure():
                                last_recorded_presence.loc[i, 'control_activated_monitor'] is np.bool_(False) or
                                last_recorded_presence.loc[i, 'control_activated_tasklamp'] is np.bool_(False) or
                                last_recorded_presence.loc[i, 'control_activated_fan'] is np.bool_(False))]
-
-        print(users_absent_index)
 
         for index in users_absent_index:
             check_device(index, 'desktop')
@@ -473,12 +454,3 @@ def check_user_departure():
             connection.close()
 
     return None
-
-
-if __name__ == '__main__':
-    # check_remote_control()
-    # update_device_state()
-    # schedule_control()
-    check_user_departure()
-
-
