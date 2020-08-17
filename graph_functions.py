@@ -4,6 +4,7 @@ import datetime as dt
 import dateutil.relativedelta
 import copy
 from datetime import date
+import numpy as np
 
 pd.set_option('mode.chained_assignment', None)
 
@@ -83,7 +84,7 @@ def _weekFunction(df):
     # idx = df.index[df['BoolCol']] # Search for indexes of value in column
     # df.loc[idx] # Get rows with all the columns
     df_week_random.loc[(df_week_random['date'] > start) & (
-        df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
+            df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
     df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(7))) &
                        (df_week_random['date'] <= (end - dt.timedelta(7))), ['week']] = "{}".format(
         (start - dt.timedelta(7)).strftime('%d %b'))
@@ -290,7 +291,7 @@ def _monthFunction(df):
         end, '%d/%m/%Y').replace(day=1)
 
     start = end_first_day_date - \
-        dateutil.relativedelta.relativedelta(months=5)
+            dateutil.relativedelta.relativedelta(months=5)
 
     mask = (df_month['date'] > start) & (df_month['date'] <= end)
 
@@ -355,10 +356,22 @@ def _cost_savings(df):
     df = df.pivot(index='date', columns='device_type', values='power')
 
     # Converts watts to dollars and finds the difference between each cell and the average
+    output = pd.DataFrame()
     for col in list(df):
-        df[col] = df[col].apply(_calculate_cost)
-        df[col] = df[col] - df[col].mean()
+        ls = []
+        for index, row in df.iterrows():
+            value = row[col]
+            location = np.where(df.index == index)[0][0]
+            average = df[col][:location].mean()
+            value -= average
+            value = _calculate_cost(value)
+            ls.append(value)
+        x = pd.Series(ls, name=col)
+        output = pd.concat([output, x], axis=1)
+    output.index = df.index
+    df = output
 
+    # print(output.columns)
     # Calculate total
     df['total'] = df.sum(axis=1)
 
@@ -395,7 +408,7 @@ def _cumulative_savings(user_id):
     total_savings = 0
     # print('hello')
     for num, item in enumerate(week_view.tolist()):
-        avg = sum(week_view.tolist()[:num])/(num+1)
+        avg = sum(week_view.tolist()[:num]) / (num + 1)
         # print(item)
         saving = avg - item
         # print(saving)
@@ -403,12 +416,8 @@ def _cumulative_savings(user_id):
             total_savings += saving
     kwh = round(total_savings / 1000, 3)
     cost = round(_calculate_cost(total_savings), 2)
-    trees = round(cost/2, 2)
+    trees = round(cost / 2, 2)
     return kwh, cost, trees
-
-
-if __name__ == '__main__':
-    print(_cumulative_savings(pd.read_csv('tables_csv/generator_6m.csv')))
 
 
 def graph_hourly_update():
