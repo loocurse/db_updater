@@ -18,7 +18,6 @@ def _lower_energy_con(user_id):
 
 def _turn_off_leave(user_id):
     """Achievement: Turn off your plug loads when you leave your desk for a long period of time during the day"""
-    # Approach: check if plug loads are switched off when presence is not detected
     df = database_read_write.get_energy_ytd_today(user_id)
     df = df.loc[df['date'] == database_read_write.get_today()]
     def unix_to_dt(time):
@@ -49,8 +48,21 @@ def _turn_off_leave(user_id):
 
 def _turn_off_end(user_id):
     """Achievement: Turn off your plug loads during at the end of the day"""
-    condition = False
-    return points['turn_off_end'] if condition else 0
+    today = database_read_write.get_today()
+    df = database_read_write.get_daily_table()
+    df['week_day'] = df.index
+    df.set_index('id', inplace=True, append=True)
+    # Check if devices are all turned off
+    df2 = database_read_write.get_energy_ytd_today(user_id)
+    df2['date'] = pd.to_datetime(df2['date'])
+    df2['datetime'] = pd.to_datetime(df2['date'].astype(str) + " " + df2['time'].astype(str))
+    df2 = df2.loc[(df2['date'].dt.date == today) & (df2['datetime'].dt.hour == 3)]
+    devices_off = df2['device_state'].sum() == 0
+
+    # Get ID of user
+    index = df.index[(df['user_id'] == user_id) & (df['week_day'] == today.strftime('%a'))]
+    if devices_off:
+        df.at[index, 'turn_off_end'] = 10
 
 
 def _cost_saving(user_id):
@@ -253,3 +265,23 @@ def add_energy_points_wallet(user_id, points):
     df.reset_index(inplace=True)
     df = df[['id','user_id','points']]
     database_read_write.update_db(df, 'points_wallet')
+
+def _cumulative_savings(user_id):
+    """Calculates the cumulative savings of user_id and uploads the value to the achievements_bonus table"""
+    df = database_read_write.get_entire_table()
+    df = df.loc[df.user_id == user_id]
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.set_index('date')
+    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()['power']
+    # week_view = week_view.apply(_calculate_cost)
+    total_savings = 0
+    for num, item in enumerate(week_view.tolist()):
+        avg = sum(week_view.tolist()[:num]) / (num + 1)
+        saving = avg - item
+        if saving > 0:
+            total_savings += saving
+    df_bonus = database_read_write.get_bonus_table()
+    df_bonus.set_index("user_id", inplace=True)
+    df_bonus.at[user_id,'cum_savings'] = total_savings
+    df_bonus.insert(1, "user_id",df_bonus.index)
+    database_read_write.update_db(df_bonus, "achievements_bonus")
