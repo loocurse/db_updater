@@ -52,7 +52,7 @@ def _weekFunction(df):
 
     end = today.strftime("%d/%m/%Y")
     end = dt.datetime.strptime(end, '%d/%m/%Y')
-    print(end)
+    # print(end)
 
     # Start of week function
 
@@ -70,7 +70,7 @@ def _weekFunction(df):
     # Delete these row indexes from dataFrame
     df_week_random = df_week_random.loc[mask]
     df_week_random.reset_index(drop=True, inplace=True)
-    print(df_week_random)
+    # print(df_week_random)
     # 2. Append new column called Week
 
     # Df_week for later
@@ -218,7 +218,7 @@ def _dayFunction(df):
 
     end = today.strftime("%d/%m/%Y")
     end = dt.datetime.strptime(end, '%d/%m/%Y')
-    print(end)
+    # print(end)
     # Start of Day function
     # Line Chart
 
@@ -356,28 +356,29 @@ def _cost_savings(df):
     df = df.pivot(index='date', columns='device_type', values='power')
 
     # Converts watts to dollars and finds the difference between each cell and the average
-    output = pd.DataFrame()
-    for col in list(df):
-        ls = []
-        for index, row in df.iterrows():
-            value = row[col]
-            location = np.where(df.index == index)[0][0]
-            average = df[col][:location].mean()
-            value -= average
-            value = _calculate_cost(value)
-            ls.append(value)
-        x = pd.Series(ls, name=col)
-        output = pd.concat([output, x], axis=1)
-    output.index = df.index
-    df = output
-
-    # print(output.columns)
-    # Calculate total
-    df['total'] = df.sum(axis=1)
+    def process(df):
+        output = pd.DataFrame()
+        for col in list(df):
+            ls = []
+            for index, row in df.iterrows():
+                value = row[col]
+                location = np.where(df.index == index)[0][0]
+                average = df[col][:location].mean()
+                value -= average
+                value = _calculate_cost(value)
+                ls.append(value)
+            x = pd.Series(ls, name=col)
+            output = pd.concat([output, x], axis=1)
+        output.index = df.index
+        output.fillna(0, inplace=True)
+        output['total'] = output.sum(axis=1)
+        return output
 
     # Aggregate data based on view & set index
     week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()
     month_view = df.groupby(pd.Grouper(freq='M')).sum()
+    week_view = process(week_view)
+    month_view = process(month_view)
 
     week_view['week'] = week_view.index
     week_view['week'] = week_view['week'].dt.strftime('%-d %b')
