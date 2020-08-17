@@ -373,11 +373,15 @@ def _cost_savings(df):
     month_view['month'] = month_view.index
     month_view['month'] = month_view['month'].dt.strftime('%b')
     # month_view = month_view.set_index('month')
-    # print(month_view.shape)
+
     if month_view.shape[0] > 7:
         month_view = month_view[-7:-1]
+    else:
+        month_view = month_view[:-1]
     if week_view.shape[0] > 7:
         week_view = week_view[-7:-1]
+    else:
+        week_view = week_view[:-1]
     return week_view, month_view
 
 
