@@ -248,6 +248,9 @@ def schedule_control():
             if check_user_presence(user_id):
                 continue
             else:
+                if device_type == 'Task Lamp':
+                    device_type = 'tasklamp'
+
                 cursor.execute("SELECT meter_id FROM power_energy_consumption WHERE user_id={} AND device_type='{}' "
                                "ORDER BY unix_time DESC LIMIT 1".format(user_id, device_type.lower()))
                 meter_ids = cursor.fetchall()
