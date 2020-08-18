@@ -263,6 +263,24 @@ def _update_bonus_table(achievements_to_update):
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
     database_read_write.update_db(df_bonus, 'achievements_bonus')
 
+def _initialise_achievements():
+    """Run this function every week to reset all achievements achieved"""
+    print(
+        f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Resetting all achievements')
+    df_daily = database_read_write.get_daily_table()
+    df_weekly = database_read_write.get_weekly_table()
+    df_bonus = database_read_write.get_bonus_table()
+    for df in [df_daily, df_weekly, df_bonus]:
+        for col in list(df):
+            if col in FUNCTIONS.keys():
+                df[col] = 0
+    df_daily.insert(1, 'week_day', df_daily.index)
+    database_read_write.update_db(df_daily, 'achievements_daily')
+    database_read_write.update_db(df_weekly, 'achievements_weekly')
+    database_read_write.update_db(df_bonus, 'achievements_bonus')
+
+if __name__ == '__main__':
+    _initialise_achievements()
 
 def achievement_update_everyday_2350():
     to_update = [
@@ -295,3 +313,4 @@ def achievement_update_every_sunday_2350():
         'complete_weekly'
     ]
     _update_weekly_table(to_update)
+    _initialise_achievements()
