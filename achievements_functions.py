@@ -33,7 +33,7 @@ def _turn_off_leave(user_id):
         df = df.loc[df['datetime'] >= pd.to_datetime(
             database_read_write.get_today())]
         presence_data = df.tail(1)['presence']
-        if presence_data == 0:
+        if np.sum(presence_data) == 0:
             return points['turn_off_leave']
         else:
             return 0
