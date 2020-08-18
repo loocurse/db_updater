@@ -34,6 +34,9 @@ def check_remote_control():
         'tables_csv/remote_control_setting.csv')
 
     try:
+        # Initialise connection variable
+        connection = None
+
         # Connect to PostgreSQL database
         connection = psycopg2.connect(user=user, password=database_password, host=host,
                                       port=port, database=database)
@@ -142,6 +145,9 @@ def update_device_state():
 
     def update_database(meter_ids, device_states):
         try:
+            # Initialise connection variable
+            connection = None
+
             # Connect to database
             connection = psycopg2.connect(user=user, password=database_password, host=host,
                                           port=port, database=database)
@@ -261,6 +267,9 @@ def schedule_control():
 
     # Obtain the schedule for all users and device types
     try:
+        # Initialise connection variable
+        connection = None
+
         # Connect to database
         connection = psycopg2.connect(user=user, password=database_password, host=host,
                                       port=port, database=database)
@@ -318,6 +327,9 @@ def check_user_arrival():
     last_recorded_presence = pd.read_csv('tables_csv/user_presence.csv')
 
     try:
+        # Initialise connection variable
+        connection = None
+
         # Connect to PostgreSQL database
         connection = psycopg2.connect(user=user, password=database_password, host=host,
                                       port=port, database=database)
@@ -432,6 +444,9 @@ def check_user_departure():
     last_recorded_presence = pd.read_csv('tables_csv/user_presence.csv')
 
     try:
+        # Initialise connection variable
+        connection = None
+
         # Connect to PostgreSQL database
         connection = psycopg2.connect(user=user, password=database_password, host=host,
                                       port=port, database=database)
