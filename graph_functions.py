@@ -15,16 +15,16 @@ def _initialise_variables(df):
     singapore_tariff_rate = 0.201
 
     def generate_month(unix_time):
-        return dt.datetime.utcfromtimestamp(unix_time).strftime('%b')
+        return dt.datetime.fromtimestamp(unix_time).strftime('%b')
 
     def generate_year(unix_time):
-        return dt.datetime.utcfromtimestamp(unix_time).strftime('%Y')
+        return dt.datetime.fromtimestamp(unix_time).strftime('%Y')
 
     def generate_dateAMPM(unix_time):
-        return dt.datetime.utcfromtimestamp(unix_time).strftime('%I:%M%p')
+        return dt.datetime.fromtimestamp(unix_time).strftime('%I:%M%p')
 
     def generate_hour(unix_time):
-        return dt.datetime.utcfromtimestamp(unix_time).strftime('%H')
+        return dt.datetime.fromtimestamp(unix_time).strftime('%H')
 
     def generate_kWh(val):
         return round(val / 1000, 3)
@@ -84,7 +84,7 @@ def _weekFunction(df):
     # idx = df.index[df['BoolCol']] # Search for indexes of value in column
     # df.loc[idx] # Get rows with all the columns
     df_week_random.loc[(df_week_random['date'] > start) & (
-            df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
+        df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
     df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(7))) &
                        (df_week_random['date'] <= (end - dt.timedelta(7))), ['week']] = "{}".format(
         (start - dt.timedelta(7)).strftime('%d %b'))
@@ -147,7 +147,6 @@ def _hourFunction(df):
     # end_date = '24/7/2020'
     # end_date = str(datetime.today().strftime('%d/%-m/%Y'))
     df = _initialise_variables(df)
-
     global df_hour_pie, df_hour
     today = date.today()
 
@@ -156,7 +155,7 @@ def _hourFunction(df):
     # Line Chart
 
     # Create new dataframe
-    df_hour = df
+    df_hour = copy.deepcopy(df)
 
     # Get last 24 hours only
 
@@ -180,7 +179,6 @@ def _hourFunction(df):
     df_hour = df_hour.groupby(
         ['date', 'hours'], as_index=False).aggregate(aggregation_functions)
     df_hour.reset_index(drop=True, inplace=True)
-
     # Optional Convert to %d/%m/%Y
     df_hour['date'] = df_hour['date'].dt.strftime('%d/%m/%Y')
 
@@ -291,7 +289,7 @@ def _monthFunction(df):
         end, '%d/%m/%Y').replace(day=1)
 
     start = end_first_day_date - \
-            dateutil.relativedelta.relativedelta(months=5)
+        dateutil.relativedelta.relativedelta(months=5)
 
     mask = (df_month['date'] > start) & (df_month['date'] <= end)
 
@@ -510,3 +508,7 @@ def graph_weekly_monthly_update():
     update_db(monthly_costsavings.reset_index(drop=True), 'costsavings_months')
     print('Completed weekly and monthly update in {} seconds.'.format(
         datetime.now() - start_time))
+
+
+# if __name__ == "__main__":
+#     graph_hourly_update()
