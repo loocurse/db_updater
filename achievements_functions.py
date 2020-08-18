@@ -1,7 +1,6 @@
 import database_read_write
 import pandas as pd
 from datetime import datetime
-# from random import randint
 import control_functions
 import warnings
 import numpy as np
@@ -49,12 +48,10 @@ def _turn_off_leave(user_id):
 
 def _turn_off_end(user_id):
     """Achievement: Turn off your plug loads during at the end of the day"""
-
     # Check if any of the devices are not turned off
     device_state_list = control_functions.get_remote_state(user_id)
     if any(device_state_list):
         return 0
-
     df = database_read_write.get_presence(user_id)
 
     def unix_to_dt(time):
@@ -212,7 +209,8 @@ FUNCTIONS = {
     'cum_savings': _cum_savings,
 }
 
-def add_energy_points_wallet(user_id, points):
+
+def _add_energy_points_wallet(user_id, points):
     """Adds energy points to user"""
     df = database_read_write.get_energy_points_wallet()
     df.set_index('user_id', inplace=True)
@@ -234,7 +232,7 @@ def _update_daily_table(achievements_to_update):
                 index = df_daily.index[(df_daily['user_id'] == user_id) & (
                         df_daily.index == today)]
                 df_daily.at[index, col] = FUNCTIONS[col](user_id)
-                add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+                _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
     df_daily.insert(1, 'week_day', df_daily.index)
     database_read_write.update_db(df_daily, 'achievements_daily')
 
@@ -249,7 +247,7 @@ def _update_weekly_table(achievements_to_update):
             if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
                 index = df_weekly.index[(df_weekly['user_id'] == user_id)]
                 df_weekly.at[index, col] = FUNCTIONS[col](user_id)
-                add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+                _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
 
 
 def _update_bonus_table(achievements_to_update):
@@ -262,7 +260,7 @@ def _update_bonus_table(achievements_to_update):
             if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
                 index = df_bonus.index[(df_bonus['user_id'] == user_id)]
                 df_bonus.at[index, col] = FUNCTIONS[col](user_id)
-                add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+                _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
     database_read_write.update_db(df_bonus, 'achievements_bonus')
 
 
@@ -297,7 +295,3 @@ def achievement_update_every_sunday_2350():
         'complete_weekly'
     ]
     _update_weekly_table(to_update)
-
-
-
-
