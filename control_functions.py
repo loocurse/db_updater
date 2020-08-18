@@ -25,7 +25,7 @@ def check_remote_control():
 
     def activate_remote_control(meter_id, command):
         query = requests.post('http://{}/api/devices/{}/action/{}'.format(fibaro_address, meter_id, command),
-                             auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
+                              auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
 
     # Obtain state of all devices from database
@@ -52,6 +52,9 @@ def check_remote_control():
         if len(diff) != 0:
             # Identify meter id based on device type and user id and switch it ON/OFF
             for user_id, device_type, new_state, previous_state in diff:
+                if device_type == 'Task Lamp':
+                    device_type = 'tasklamp'
+
                 cursor.execute("SELECT meter_id FROM power_energy_consumption WHERE user_id={} AND device_type='{}' "
                                "ORDER BY unix_time DESC LIMIT 1".format(user_id, device_type.lower()))
                 meter_id = cursor.fetchone()[0]
@@ -84,18 +87,12 @@ def check_remote_control():
 
 
 def get_remote_state(user_id):
-
     # Database and Fibaro credentials
     user = 'dadtkzpuzwfows'
     database_password = '1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410'
     host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
     port = '5432'
     database = 'd53rn0nsdh7eok'
-    # user = 'raymondlow'
-    # database_password = 'password123'
-    # host = 'localhost'
-    # port = '5432'
-    # database = 'plug_mate_dev_db'
     fibaro_address = '172.19.243.58:80'
     fibaro_username = 'admin'
     fibaro_password = 'admin'
@@ -186,19 +183,8 @@ def update_device_state():
 
     # Update CSV file
     assert len(last_recorded_state) == len(latest_state)
-<<<<<<< HEAD
-    diff = [(i, latest_state[i]) for i, item in enumerate(
-        last_recorded_state['last_state']) if latest_state[i] != item]
-    index_diff, state_diff = map(list, zip(*diff))
-
-    if len(index_diff) != 0:
-        # Update CSV file
-        last_recorded_state['last_state'] = latest_state
-        last_recorded_state.to_csv('tables_csv/device_state.csv', index=False)
-=======
     last_recorded_state['last_state'] = latest_state
     last_recorded_state.to_csv('tables_csv/device_state.csv', index=False)
->>>>>>> 2e9e5c009ed09dcb45829b86278f41d6289fd1b6
 
     # Update database
     update_database(last_recorded_state['meter_id'].tolist(), latest_state)
@@ -228,9 +214,6 @@ def schedule_control():
                               auth=HTTPBasicAuth(fibaro_username, fibaro_password)).json()
         return None
 
-<<<<<<< HEAD
-=======
-
     def check_user_presence(user_id):
         cursor.execute("SELECT presence FROM presence WHERE user_id={} ORDER BY unix_time DESC LIMIT 1".format(user_id))
         presence = cursor.fetchone()[0]
@@ -241,8 +224,6 @@ def schedule_control():
         else:
             raise ValueError('Presence information returned {} is not supported.')
 
-
->>>>>>> 2e9e5c009ed09dcb45829b86278f41d6289fd1b6
     def check_schedule(schedules, current_time, day_of_week, state):
         if state == 'On':
             event_column = 'event_start'
@@ -252,7 +233,8 @@ def schedule_control():
         # Obtain user id and device type information for devices that needs to be switched ON/OFF
         control_schedule = [(schedules.loc[i, 'user_id'], schedules.loc[i, 'device_type'])
                             for i in range(len(schedules))
-                            if current_time in schedules.loc[i, event_column] and day_of_week in schedules.loc[i, 'event_rrule']]
+                            if current_time in schedules.loc[i, event_column] and day_of_week in schedules.loc[
+                                i, 'event_rrule']]
 
         # Remotely switch ON/OFF devices using meter id (obtained using user id and device type)
         if state == 'On':
@@ -264,6 +246,9 @@ def schedule_control():
             if check_user_presence(user_id):
                 continue
             else:
+                if device_type == 'Task Lamp':
+                    device_type = 'tasklamp'
+
                 cursor.execute("SELECT meter_id FROM power_energy_consumption WHERE user_id={} AND device_type='{}' "
                                "ORDER BY unix_time DESC LIMIT 1".format(user_id, device_type.lower()))
                 meter_ids = cursor.fetchall()
@@ -282,7 +267,7 @@ def schedule_control():
         cursor.execute("SELECT * FROM plug_mate_app_scheduledata")
         query_result = cursor.fetchall()
         schedules = pd.DataFrame(query_result, columns=[
-                                 desc[0] for desc in cursor.description])
+            desc[0] for desc in cursor.description])
 
         # Check if the starting time of any schedule matches with the current time
         current_time = datetime.today().strftime('%H:%M')
@@ -418,13 +403,8 @@ def check_user_departure():
         if last_recorded_presence.loc[index, 'control_activated_{}'.format(device_type)] is np.bool_(False):
             # Query for time interval before device should be remotely switched off
             cursor.execute("SELECT presence_setting FROM plug_mate_app_presencedata "
-<<<<<<< HEAD
-                           "WHERE user_id={} AND device_type={}".format(last_recorded_presence.loc[index, 'user_id'],
-                                                                        device_type.capitalize()))
-=======
                            "WHERE user_id={} AND device_type='{}'".format(last_recorded_presence.loc[index, 'user_id'],
-                                                                         processed_device_type))
->>>>>>> 2e9e5c009ed09dcb45829b86278f41d6289fd1b6
+                                                                          processed_device_type))
             time_interval = cursor.fetchone()[0]
 
             if time.time() - last_recorded_presence.loc[index, 'last_detected_departure'] > time_interval * 60.0:
@@ -434,13 +414,7 @@ def check_user_departure():
                 meter_ids = cursor.fetchall()
                 for meter_id in meter_ids:
                     activate_remote_control(meter_id[0], 'turnOff')
-
-<<<<<<< HEAD
-                last_recorded_presence.loc[i, 'control_activated_{}'.format(
-                    device_type)] = True
-=======
                 last_recorded_presence.loc[index, 'control_activated_{}'.format(device_type)] = True
->>>>>>> 2e9e5c009ed09dcb45829b86278f41d6289fd1b6
 
             else:
                 pass

@@ -394,29 +394,12 @@ def _cost_savings(df):
         week_view = week_view[-7:-1]
     else:
         week_view = week_view[:-1]
+    print(week_view, month_view)
     return week_view, month_view
 
 
-def _cumulative_savings(user_id):
-    """Calculates the cumulative savings and uploads the value to the database"""
-    df = get_entire_table()
-    df['date'] = pd.to_datetime(df['date'])
-    df = df.set_index('date')
-    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()['power']
-    # week_view = week_view.apply(_calculate_cost)
-    total_savings = 0
-    # print('hello')
-    for num, item in enumerate(week_view.tolist()):
-        avg = sum(week_view.tolist()[:num]) / (num + 1)
-        # print(item)
-        saving = avg - item
-        # print(saving)
-        if saving > 0:
-            total_savings += saving
-    kwh = round(total_savings / 1000, 3)
-    cost = round(_calculate_cost(total_savings), 2)
-    trees = round(cost / 2, 2)
-    return kwh, cost, trees
+
+
 
 
 def graph_hourly_update():
@@ -477,19 +460,19 @@ def graph_weekly_monthly_update():
     user_ids = sorted(df['user_id'].unique())
 
     for user_id in user_ids:
-        line_week, pie_week = _weekFunction(
-            df[df['user_id'] == user_id].reset_index(drop=True))
-        line_week.insert(0, 'user_id', user_id)
-        pie_week.insert(0, 'user_id', user_id)
-        weekly_line = pd.concat([weekly_line, line_week], ignore_index=True)
-        weekly_pie = pd.concat([weekly_pie, pie_week], ignore_index=True)
-
-        line_month, pie_month = _monthFunction(
-            df[df['user_id'] == user_id].reset_index(drop=True))
-        line_month.insert(0, 'user_id', user_id)
-        pie_month.insert(0, 'user_id', user_id)
-        monthly_line = pd.concat([monthly_line, line_month], ignore_index=True)
-        monthly_pie = pd.concat([monthly_pie, pie_month], ignore_index=True)
+        # line_week, pie_week = _weekFunction(
+        #     df[df['user_id'] == user_id].reset_index(drop=True))
+        # line_week.insert(0, 'user_id', user_id)
+        # pie_week.insert(0, 'user_id', user_id)
+        # weekly_line = pd.concat([weekly_line, line_week], ignore_index=True)
+        # weekly_pie = pd.concat([weekly_pie, pie_week], ignore_index=True)
+        #
+        # line_month, pie_month = _monthFunction(
+        #     df[df['user_id'] == user_id].reset_index(drop=True))
+        # line_month.insert(0, 'user_id', user_id)
+        # pie_month.insert(0, 'user_id', user_id)
+        # monthly_line = pd.concat([monthly_line, line_month], ignore_index=True)
+        # monthly_pie = pd.concat([monthly_pie, pie_month], ignore_index=True)
 
         savings_week, savings_month = _cost_savings(
             df[df['user_id'] == user_id].reset_index(drop=True))
@@ -500,10 +483,10 @@ def graph_weekly_monthly_update():
         monthly_costsavings = pd.concat(
             [monthly_costsavings, savings_month], ignore_index=True)
 
-    update_db(weekly_line.reset_index(drop=True), 'historical_weeks_line')
-    update_db(weekly_pie.reset_index(drop=True), 'historical_weeks_pie')
-    update_db(monthly_line.reset_index(drop=True), 'historical_months_line')
-    update_db(monthly_pie.reset_index(drop=True), 'historical_months_pie')
+    # update_db(weekly_line.reset_index(drop=True), 'historical_weeks_line')
+    # update_db(weekly_pie.reset_index(drop=True), 'historical_weeks_pie')
+    # update_db(monthly_line.reset_index(drop=True), 'historical_months_line')
+    # update_db(monthly_pie.reset_index(drop=True), 'historical_months_pie')
     update_db(weekly_costsavings.reset_index(drop=True), 'costsavings_weeks')
     update_db(monthly_costsavings.reset_index(drop=True), 'costsavings_months')
     print('Completed weekly and monthly update in {} seconds.'.format(

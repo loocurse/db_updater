@@ -1,7 +1,8 @@
 import database_read_write
 import pandas as pd
 from datetime import datetime
-from random import randint
+# from random import randint
+import numpy as np
 import control_functions
 
 points = pd.read_csv('tables_csv/achievements_points.csv',
@@ -10,6 +11,7 @@ points = pd.read_csv('tables_csv/achievements_points.csv',
 
 def _lower_energy_con(user_id):
     """Achievement: Clock a lower energy consumption than yesterday"""
+    # TODO detect at the end of the day
     df = database_read_write.get_energy_ytd_today(user_id)
     ls = df.groupby(by='date').sum()['power'].to_list()
     if not ls:
@@ -20,7 +22,6 @@ def _lower_energy_con(user_id):
 def _turn_off_leave(user_id):
     """Achievement: Turn off your plug loads when you leave your desk for a long period of time during the day"""
     # Approach: check if plug loads are switched off when presence is not detected
-    device_state_list = []
     device_state_list = control_functions.get_remote_state(user_id)
 
     if True not in device_state_list:
@@ -29,11 +30,12 @@ def _turn_off_leave(user_id):
         def unix_to_dt(time):
             time = int(time)
             return datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')
+
         df['datetime'] = pd.to_datetime(df['unix_time'].apply(unix_to_dt))
         df = df.loc[df['datetime'] >= pd.to_datetime(
             database_read_write.get_today())]
         presence_data = df.tail(1)['presence']
-        if presence_data == 0:
+        if np.sum(presence_data) == 0:
             return points['turn_off_leave']
         else:
             return 0
@@ -42,18 +44,32 @@ def _turn_off_leave(user_id):
         return 0
 
 
-if __name__ == "__main__":
-    _turn_off_leave(1)
-
-
 def _turn_off_end(user_id):
     """Achievement: Turn off your plug loads during at the end of the day"""
-    condition = False
-    return points['turn_off_end'] if condition else 0
+
+    # Check if any of the devices are not turned off
+    device_state_list = control_functions.get_remote_state(user_id)
+    if any(device_state_list):
+        return 0
+
+    df = database_read_write.get_presence(user_id)
+    def unix_to_dt(time):
+        time = int(time)
+        return datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')
+
+    df['datetime'] = pd.to_datetime(df['unix_time'].apply(unix_to_dt))
+    df = df.loc[df['datetime'] >= pd.to_datetime(
+        database_read_write.get_today())]
+    if sum(df['presence']) < 0:
+        return 0
+    else:
+        return points['turn_off_end']
+
 
 
 def _cost_saving(user_id):
     """Achievement: Clock a higher cost savings than last week"""
+    # TODO adjust name, read at the end of the week
     week_view = database_read_write.read_cost_savings()
     week_view_user = week_view[week_view.user_id == user_id]
     list = week_view_user['total'][-2:].to_list()
@@ -73,8 +89,10 @@ def _schedule_based(user_id):
 
 def _complete_daily(user_id):
     """Achievement: Complete all daily achievements for 4 days of the week"""
-    if database_read_write.get_today() not in ['Thu', 'Fri', 'Sat']:
-        return False
+    # TODO turn off checking on sat
+    # TODO remove daily table from daily achievements on weekends
+    if database_read_write.get_today() not in ['Thu', 'Fri']:
+        return 0
     else:
         df = database_read_write.get_daily_table()
         df = df.loc[df.user_id == user_id]
@@ -235,7 +253,7 @@ def achievements_check_if_all_devices_off():
 
         # Get ID of user
         index = df.index[(df['user_id'] == user_id) & (
-            df['week_day'] == today.strftime('%a'))]
+                df['week_day'] == today.strftime('%a'))]
         if devices_off:
             df.at[index, 'turn_off_end'] = 10
 
@@ -256,3 +274,24 @@ def add_energy_points_wallet(user_id, points):
     df.reset_index(inplace=True)
     df = df[['id', 'user_id', 'points']]
     database_read_write.update_db(df, 'points_wallet')
+
+
+def _cumulative_savings(user_id):
+    """Calculates the cumulative savings of user_id and uploads the value to the achievements_bonus table"""
+    df = database_read_write.get_entire_table()
+    df = df.loc[df.user_id == user_id]
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.set_index('date')
+    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()['power']
+    # week_view = week_view.apply(_calculate_cost)
+    total_savings = 0
+    for num, item in enumerate(week_view.tolist()):
+        avg = sum(week_view.tolist()[:num]) / (num + 1)
+        saving = avg - item
+        if saving > 0:
+            total_savings += saving
+    df_bonus = database_read_write.get_bonus_table()
+    df_bonus.set_index("user_id", inplace=True)
+    df_bonus.at[user_id, 'cum_savings'] = total_savings
+    df_bonus.insert(1, "user_id", df_bonus.index)
+    database_read_write.update_db(df_bonus, "achievements_bonus")

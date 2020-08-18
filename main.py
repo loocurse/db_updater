@@ -4,12 +4,17 @@ from database_read_write import *
 from control_functions import *
 import schedule
 
-
-CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
-                         user='dadtkzpuzwfows',
-                         password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
-                         host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
+CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
+                         user='raymondlow',
+                         password='password123',
+                         host='localhost',
                          port='5432')
+
+# CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
+#                          user='dadtkzpuzwfows',
+#                          password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
+#                          host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
+#                          port='5432')
 
 
 def initialise_achievements():
@@ -38,7 +43,10 @@ if __name__ == '__main__':
     # Update control features
     schedule.every(5).seconds.do(check_remote_control)
     schedule.every().minutes.do(update_device_state)
-    schedule.every(15).minutes.do(schedule_control)
+    schedule.every().hour.at(':00').do(schedule_control)
+    schedule.every().hour.at(':15').do(schedule_control)
+    schedule.every().hour.at(':30').do(schedule_control)
+    schedule.every().hour.at(':45').do(schedule_control)
     schedule.every(5).seconds.do(check_user_arrival)
     schedule.every().minutes.do(check_user_departure)
 
