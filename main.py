@@ -43,7 +43,10 @@ if __name__ == '__main__':
     # Update control features
     schedule.every(5).seconds.do(check_remote_control)
     schedule.every().minutes.do(update_device_state)
-    schedule.every(15).minutes.do(schedule_control)
+    schedule.every().hour.at(':00').do(schedule_control)
+    schedule.every().hour.at(':15').do(schedule_control)
+    schedule.every().hour.at(':30').do(schedule_control)
+    schedule.every().hour.at(':45').do(schedule_control)
     schedule.every(5).seconds.do(check_user_arrival)
     schedule.every().minutes.do(check_user_departure)
 
