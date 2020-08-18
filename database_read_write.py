@@ -3,12 +3,6 @@ import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
 
-# from main import CONNECTION_PARAMS
-# CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
-#                          user='raymondlow',
-#                          password='password123',
-#                          host='localhost',
-#                          port='5432')
 
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
@@ -54,13 +48,18 @@ def read_all_db():
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     df['date'] = pd.to_datetime(df['date'])
+    print(df)
     return df
+
+# if __name__ == "__main__":
+#     read_all_db()
 
 
 def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
-    assert sorted(get_table_column(table_name)) == sorted(list(df.columns)), "Table columns are not the same"
+    assert sorted(get_table_column(table_name)) == sorted(
+        list(df.columns)), "Table columns are not the same"
     df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
@@ -159,6 +158,7 @@ def get_presence(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
+
 
 def get_schedules(user_id):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
