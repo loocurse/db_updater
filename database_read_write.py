@@ -51,9 +51,6 @@ def read_all_db():
     print(df)
     return df
 
-# if __name__ == "__main__":
-#     read_all_db()
-
 
 def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
