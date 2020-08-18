@@ -467,5 +467,5 @@ def graph_weekly_monthly_update():
         datetime.now() - start_time))
 
 
-if __name__ == "__main__":
-    graph_hourly_update()
+# if __name__ == "__main__":
+#     graph_hourly_update()
