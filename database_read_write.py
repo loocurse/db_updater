@@ -3,18 +3,12 @@ import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
 
-# from main import CONNECTION_PARAMS
-CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
-                         user='raymondlow',
-                         password='password123',
-                         host='localhost',
-                         port='5432')
 
-# CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
-#                          user='dadtkzpuzwfows',
-#                          password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
-#                          host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
-#                          port='5432')g
+CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
+                         user='dadtkzpuzwfows',
+                         password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
+                         host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
+                         port='5432')
 
 engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(CONNECTION_PARAMS['user'],
                                                             CONNECTION_PARAMS['password'],
@@ -46,7 +40,11 @@ def read_all_db():
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     df['date'] = pd.to_datetime(df['date'])
+    print(df)
     return df
+
+# if __name__ == "__main__":
+#     read_all_db()
 
 
 def update_db(df, table_name, index_to_col=False):
@@ -152,6 +150,7 @@ def get_presence(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
+
 
 def get_schedules(user_id):
     connection = psycopg2.connect(**CONNECTION_PARAMS)

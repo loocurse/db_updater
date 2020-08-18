@@ -4,7 +4,9 @@ import datetime as dt
 import dateutil.relativedelta
 import copy
 from datetime import date
+from datetime import timezone
 import numpy as np
+import pytz
 
 pd.set_option('mode.chained_assignment', None)
 
@@ -148,24 +150,32 @@ def _hourFunction(df):
     # end_date = str(datetime.today().strftime('%d/%-m/%Y'))
     df = _initialise_variables(df)
     global df_hour_pie, df_hour
-    today = date.today()
 
-    end = today.strftime("%d/%m/%Y")
-    end = dt.datetime.strptime(end, '%d/%m/%Y')
     # Line Chart
 
     # Create new dataframe
     df_hour = copy.deepcopy(df)
-
     # Get last 24 hours only
+    now = datetime.now()
+    timezone = pytz.timezone('Asia/Singapore')
+    timestamp_now = now.replace(
+        tzinfo=timezone).timestamp()
+    start = now - dt.timedelta(hours=13)
 
+    # df_hour.to_csv("comapare.csv")
+    # mask = (df_hour['date'] > start) & (df_hour['date'] <= today)
     df_hour['date'] = pd.to_datetime(df_hour['date'])
-
-    mask = (df_hour['date'] == end)
+    start = dt.datetime.strptime(str(start), '%Y-%m-%d %H:%M:%S.%f')
+    timestamp_start = start.replace(
+        tzinfo=timezone).timestamp()
+    mask = df_hour['unix_time'] > timestamp_start
+    # print(start)
+    # print(timestamp_start)
 
     # Delete these row indexes from dataFrame
     df_hour = df_hour.loc[mask]
     df_hour.reset_index(drop=True, inplace=True)
+    # print(df_hour)
 
     # Create new instance of df for Piechart
     df_hour_pie = copy.deepcopy(df_hour)
@@ -197,26 +207,17 @@ def _hourFunction(df):
     df_hour_pie['date'] = df_hour_pie['date'].dt.strftime('%d/%m/%Y')
     # End of hour function
 
-    # print(df_hour.head(), ' Hour Line Chart')
-    # print(df_hour_pie.head(), ' Hour Pie Chart')
-
-    # df_hour.to_csv(".\\Data Tables\\df_hour_line.csv")
-    # df_hour_pie.to_csv(".\\Data Tables\\df_hour_pie.csv")
-
     return df_hour, df_hour_pie
 
 
 def _dayFunction(df):
     global df_day, df_day_pie
 
-    # end_date = '24/7/2020'
-    # end_date = str(datetime.today().strftime('%d/%-m/%Y'))
     df = _initialise_variables(df)
     today = date.today()
 
     end = today.strftime("%d/%m/%Y")
     end = dt.datetime.strptime(end, '%d/%m/%Y')
-    # print(end)
     # Start of Day function
     # Line Chart
 
@@ -226,8 +227,7 @@ def _dayFunction(df):
     # Get last 7 days
     # Get names of indexes for which column Date only has values 7 days before end_date
     df_day['date'] = pd.to_datetime(df_day['date'])
-    # end = end_date
-    # end = dt.datetime.strptime(end, '%d/%m/%Y')
+
     start = end - dt.timedelta(7)
     mask = (df_day['date'] > start) & (df_day['date'] <= end)
     # Delete these row indexes from dataFrame
@@ -259,11 +259,6 @@ def _dayFunction(df):
         ['device_type', 'date'], as_index=False).aggregate(aggregation_functions)
     df_day_pie.reset_index(drop=True, inplace=True)
     # End of day function
-
-    # print(df_day.head(), ' Day Line Chart')
-    # print(df_day_pie.head(), ' Day Pie Chart')
-    df_day.to_csv(".\\Data Tables\\df_day_line.csv")
-    df_day_pie.to_csv(".\\Data Tables\\df_day_pie.csv")
 
     return df_day, df_day_pie
 
@@ -319,22 +314,6 @@ def _monthFunction(df):
     df_month_pie.reset_index(drop=True, inplace=True)
 
     # # END OF MONTH FUNCTION
-    # print(df_month.head(), ' Month Line Chart')
-    # print(df_month_pie.head(), ' Month Pie Chart')
-
-    # '''Output to Server for All Users'''
-    # df_month.to_csv(".\\Data Tables\\df_month_line.csv")
-    # df_month_pie.to_csv(".\\Data Tables\\df_month_pie.csv")
-
-    return df_month, df_month_pie
-
-    # END OF MONTH FUNCTION
-    # print(df_month.head(), ' Month Line Chart')
-    # print(df_month_pie.head(), ' Month Pie Chart')
-
-    '''Output to Server for All Users'''
-    # df_month.to_csv(".\\Data Tables\\df_month_line.csv")
-    # df_month_pie.to_csv(".\\Data Tables\\df_month_pie.csv")
 
     return df_month, df_month_pie
 
@@ -396,10 +375,6 @@ def _cost_savings(df):
         week_view = week_view[:-1]
     print(week_view, month_view)
     return week_view, month_view
-
-
-
-
 
 
 def graph_hourly_update():
@@ -493,5 +468,5 @@ def graph_weekly_monthly_update():
         datetime.now() - start_time))
 
 
-# if __name__ == "__main__":
-#     graph_hourly_update()
+if __name__ == "__main__":
+    graph_hourly_update()
