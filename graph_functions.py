@@ -396,12 +396,7 @@ def _cost_savings(df):
         week_view = week_view[-7:-1]
     else:
         week_view = week_view[:-1]
-    print(week_view, month_view)
     return week_view, month_view
-
-
-
-
 
 
 def graph_hourly_update():
