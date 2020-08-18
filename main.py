@@ -17,18 +17,6 @@ CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
 #                          port='5432')
 
 
-def initialise_achievements():
-    """Run this function every week to reset all achievements achieved"""
-    print(
-        f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Resetting all achievements')
-    df_daily = get_daily_table()
-    df_weekly = get_weekly_table()
-    df_daily.loc[:, 'lower_energy_con':'complete_all'] = False
-    df_weekly.loc[:, 'cost_saving':'complete_weekly'] = False
-    update_db(df_daily, 'achievements_daily', index_to_col=True)
-    update_db(df_weekly, 'achievements_weekly', index_to_col=True)
-
-
 if __name__ == '__main__':
     # Update dashboard
     schedule.every().hour.do(graph_hourly_update)
