@@ -36,9 +36,12 @@ if __name__ == '__main__':
     schedule.every().sunday.do(graph_weekly_monthly_update)
 
     # Update achievements
-    # schedule.every().hour.do(achievements_update_hourly)
-    # schedule.every().day.do(achievements_update_daily)
-    # schedule.every().day.at("03:00").do(achievements_check_if_all_devices_off)
+    schedule.every().hour.at(':00').do(achievements_update_every_15m)
+    schedule.every().hour.at(':15').do(achievements_update_every_15m)
+    schedule.every().hour.at(':30').do(achievements_update_every_15m)
+    schedule.every().hour.at(':45').do(achievements_update_every_15m)
+    schedule.every().day.at("23:50").do(achievement_update_everyday_2350)
+    schedule.every().sunday.at("23:50").do(achievement_update_every_sunday_2350)
 
     # Update control features
     schedule.every(5).seconds.do(check_remote_control)
