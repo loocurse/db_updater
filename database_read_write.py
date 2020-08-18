@@ -57,6 +57,8 @@ def update_db(df, table_name, index_to_col=False):
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
     assert sorted(get_table_column(table_name)) == sorted(
         list(df.columns)), "Table columns are not the same"
+    print(df.head())
+    input('Proceed?')
     df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
