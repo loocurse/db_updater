@@ -2,6 +2,7 @@ import database_read_write
 import pandas as pd
 from datetime import datetime
 # from random import randint
+import numpy as np
 import control_functions
 
 points = pd.read_csv('tables_csv/achievements_points.csv',
@@ -45,21 +46,11 @@ def _turn_off_leave(user_id):
 
 def _turn_off_end(user_id):
     """Achievement: Turn off your plug loads during at the end of the day"""
-    # today = database_read_write.get_today()
-    # df = database_read_write.get_daily_table()
-    # df['week_day'] = df.index
-    # df.set_index('id', inplace=True, append=True)
-    # # Check if devices are all turned off
-    # df2 = database_read_write.get_energy_ytd_today(user_id)
-    # df2['date'] = pd.to_datetime(df2['date'])
-    # df2['datetime'] = pd.to_datetime(df2['date'].astype(str) + " " + df2['time'].astype(str))
-    # df2 = df2.loc[(df2['date'].dt.date == today) & (df2['datetime'].dt.hour == 3)]
-    # devices_off = df2['device_state'].sum() == 0
 
-    # Get ID of user
+    # Check if any of the devices are not turned off
     device_state_list = control_functions.get_remote_state(user_id)
-    # if any(device_state_list):
-    #     return 0
+    if any(device_state_list):
+        return 0
 
     df = database_read_write.get_presence(user_id)
     def unix_to_dt(time):
@@ -73,9 +64,7 @@ def _turn_off_end(user_id):
         return 0
     else:
         return points['turn_off_end']
-#
-# if __name__ == '__main__':
-#     _turn_off_end(1)
+
 
 
 def _cost_saving(user_id):
