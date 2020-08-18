@@ -4,17 +4,17 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 # from main import CONNECTION_PARAMS
-CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
-                         user='raymondlow',
-                         password='password123',
-                         host='localhost',
-                         port='5432')
+# CONNECTION_PARAMS = dict(database='plug_mate_dev_db',
+#                          user='raymondlow',
+#                          password='password123',
+#                          host='localhost',
+#                          port='5432')
 
-# CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
-#                          user='dadtkzpuzwfows',
-#                          password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
-#                          host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
-#                          port='5432')g
+CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
+                         user='dadtkzpuzwfows',
+                         password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
+                         host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
+                         port='5432')
 
 engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(CONNECTION_PARAMS['user'],
                                                             CONNECTION_PARAMS['password'],
@@ -35,6 +35,14 @@ def get_entire_table():
     return df
 
 
+def get_table_column(table_name):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        cursor.execute(f"SELECT * FROM {table_name} LIMIT 5")
+        colnames = [desc[0] for desc in cursor.description]
+    return colnames
+
+
 def read_all_db():
     """Reads the SQL database for the last 6 months and outputs the dataframe with cols stated below"""
     connection = psycopg2.connect(**CONNECTION_PARAMS)
@@ -52,8 +60,7 @@ def read_all_db():
 def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
-    # print(df.columns)
-    # print('\n\n')
+    assert sorted(get_table_column(table_name)) == sorted(list(df.columns)), "Table columns are not the same"
     df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
