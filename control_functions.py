@@ -52,6 +52,9 @@ def check_remote_control():
         if len(diff) != 0:
             # Identify meter id based on device type and user id and switch it ON/OFF
             for user_id, device_type, new_state, previous_state in diff:
+                if device_type == 'Task Lamp':
+                    device_type = 'tasklamp'
+
                 cursor.execute("SELECT meter_id FROM power_energy_consumption WHERE user_id={} AND device_type='{}' "
                                "ORDER BY unix_time DESC LIMIT 1".format(user_id, device_type.lower()))
                 meter_id = cursor.fetchone()[0]
@@ -90,11 +93,6 @@ def get_remote_state(user_id):
     host = 'ec2-46-137-79-235.eu-west-1.compute.amazonaws.com'
     port = '5432'
     database = 'd53rn0nsdh7eok'
-    # user = 'raymondlow'
-    # database_password = 'password123'
-    # host = 'localhost'
-    # port = '5432'
-    # database = 'plug_mate_dev_db'
     fibaro_address = '172.19.243.58:80'
     fibaro_username = 'admin'
     fibaro_password = 'admin'
@@ -248,6 +246,9 @@ def schedule_control():
             if check_user_presence(user_id):
                 continue
             else:
+                if device_type == 'Task Lamp':
+                    device_type = 'tasklamp'
+
                 cursor.execute("SELECT meter_id FROM power_energy_consumption WHERE user_id={} AND device_type='{}' "
                                "ORDER BY unix_time DESC LIMIT 1".format(user_id, device_type.lower()))
                 meter_ids = cursor.fetchall()
