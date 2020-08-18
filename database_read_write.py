@@ -29,6 +29,14 @@ def get_entire_table():
     return df
 
 
+def get_table_column(table_name):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        cursor.execute(f"SELECT * FROM {table_name} LIMIT 5")
+        colnames = [desc[0] for desc in cursor.description]
+    return colnames
+
+
 def read_all_db():
     """Reads the SQL database for the last 6 months and outputs the dataframe with cols stated below"""
     connection = psycopg2.connect(**CONNECTION_PARAMS)
@@ -50,8 +58,8 @@ def read_all_db():
 def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
-    # print(df.columns)
-    # print('\n\n')
+    assert sorted(get_table_column(table_name)) == sorted(
+        list(df.columns)), "Table columns are not the same"
     df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 

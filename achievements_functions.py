@@ -1,9 +1,11 @@
 import database_read_write
 import pandas as pd
 from datetime import datetime
-# from random import randint
-import numpy as np
 import control_functions
+import warnings
+import numpy as np
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 points = pd.read_csv('tables_csv/achievements_points.csv',
                      index_col=['achievement'])['points'].to_dict()
@@ -46,13 +48,12 @@ def _turn_off_leave(user_id):
 
 def _turn_off_end(user_id):
     """Achievement: Turn off your plug loads during at the end of the day"""
-
     # Check if any of the devices are not turned off
     device_state_list = control_functions.get_remote_state(user_id)
     if any(device_state_list):
         return 0
-
     df = database_read_write.get_presence(user_id)
+
     def unix_to_dt(time):
         time = int(time)
         return datetime.utcfromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S')
@@ -60,11 +61,20 @@ def _turn_off_end(user_id):
     df['datetime'] = pd.to_datetime(df['unix_time'].apply(unix_to_dt))
     df = df.loc[df['datetime'] >= pd.to_datetime(
         database_read_write.get_today())]
-    if sum(df['presence']) < 0:
+    if sum(df['presence']) < 5:
         return 0
     else:
         return points['turn_off_end']
 
+
+def _complete_all_daily(user_id):
+    daily = database_read_write.get_daily_table()
+    daily = daily.loc[daily.user_id == user_id]
+    ser = daily.loc[database_read_write.get_today().strftime('%a')].to_list()
+    if all(ser):
+        return points['complete_all_daily']
+    else:
+        return 0
 
 
 def _cost_saving(user_id):
@@ -97,6 +107,15 @@ def _complete_daily(user_id):
         df = database_read_write.get_daily_table()
         df = df.loc[df.user_id == user_id]
         return points['complete_daily'] if sum(df['complete_all_daily'].to_list()) >= 20 * 4 else 0
+
+
+def _complete_all_weekly(user_id):
+    weekly = database_read_write.get_weekly_table()
+    weekly = weekly.loc[weekly.user_id == user_id].iloc[0].to_list()
+    if all(weekly):
+        return points['complete_all_weekly']
+    else:
+        return 0
 
 
 def _tree_first(user_id):
@@ -155,128 +174,6 @@ def _first_presence(user_id):
 
 
 def _cum_savings(user_id):
-    return 0
-
-
-def achievements_update_hourly():
-    df = database_read_write.get_daily_table()
-    user_ids = sorted(df['user_id'].unique())
-    today = database_read_write.get_today().strftime('%a')
-    output = pd.DataFrame()
-    daily_functions = (_lower_energy_con, _turn_off_leave, _turn_off_end)
-    for user_id in user_ids:
-        user_df = df.loc[df.user_id == user_id].copy()
-        ls = user_df.loc[today]['lower_energy_con': 'turn_off_end'].to_list()
-        updated_output = []
-        for num, status in enumerate(ls):
-            if status == 0:  # if task not yet met, check if task met
-                earned_points = daily_functions[num](user_id)
-                updated_output.append(earned_points)
-                if earned_points > 0:
-                    add_energy_points_wallet(user_id, earned_points)
-            else:
-                updated_output.append(status)
-        updated_output.append(points['complete_daily']) if all(
-            updated_output) else updated_output.append(0)
-        # Replace information
-        user_df.at[today, 'lower_energy_con':'complete_all_daily'] = updated_output
-        output = pd.concat([output, user_df])
-    # Send to DB
-    output.reset_index(inplace=True)
-    database_read_write.update_db(output, 'achievements_daily')
-
-
-def achievements_update_daily():
-    df_weekly = database_read_write.get_weekly_table()
-    df_bonus = database_read_write.get_bonus_table()
-    user_ids = sorted(df_weekly['user_id'].unique())
-    output_weekly = pd.DataFrame()
-    output_bonus = pd.DataFrame()
-    for user_id in user_ids:
-        # Weekly
-        user_df = df_weekly.loc[df_weekly.user_id ==
-                                user_id].copy().reset_index(drop=True)
-        ls = user_df.loc[0]['cost_saving':'complete_daily'].to_list()
-        updated_output = []
-        weekly_functions = (_cost_saving, _schedule_based, _complete_daily)
-        for num, status in enumerate(ls):
-            if status == 0:
-                earned_points = weekly_functions[num](user_id)
-                updated_output.append(earned_points)
-                if earned_points > 0:
-                    add_energy_points_wallet(user_id, earned_points)
-            else:
-                updated_output.append(status)
-        updated_output.append(points['complete_weekly']) if all(
-            updated_output) else updated_output.append(0)
-        user_df.loc[0, 'cost_saving':'complete_weekly'] = updated_output
-        output_weekly = pd.concat([output_weekly, user_df], ignore_index=True)
-
-        # Bonus
-        user_df = df_bonus.loc[df_bonus.user_id ==
-                               user_id].copy().reset_index(drop=True)
-        ls = user_df.loc[0]['tree_first':'cum_savings'].to_list()
-        updated_output = []
-        bonus_functions = (
-            _tree_first, _tree_fifth, _tree_tenth, _redeem_reward, _first_remote, _first_schedule, _first_presence,
-            _cum_savings)
-        for num, status in enumerate(ls):
-            if not status:
-                earned_points = bonus_functions[num](user_id)
-                updated_output.append(earned_points)
-                if earned_points > 0:
-                    add_energy_points_wallet(user_id, earned_points)
-            else:
-                updated_output.append(True)
-        user_df.loc[0, 'tree_first':'cum_savings'] = updated_output
-        output_bonus = pd.concat([output_bonus, user_df], ignore_index=True)
-
-    database_read_write.update_db(output_weekly, 'achievements_weekly')
-    database_read_write.update_db(output_bonus, 'achievements_bonus')
-
-
-def achievements_check_if_all_devices_off():
-    today = database_read_write.get_today()
-    df = database_read_write.get_daily_table()
-    df['week_day'] = df.index
-    df.set_index('id', inplace=True, append=True)
-    user_ids = sorted(df['user_id'].unique())
-    for user_id in user_ids:
-        # Check if devices are all turned off
-        df2 = database_read_write.get_energy_ytd_today(user_id)
-        df2['date'] = pd.to_datetime(df2['date'])
-        df2['datetime'] = pd.to_datetime(
-            df2['date'].astype(str) + " " + df2['time'].astype(str))
-        df2 = df2.loc[(df2['date'].dt.date == today) &
-                      (df2['datetime'].dt.hour == 3)]
-        devices_off = df2['device_state'].sum() == 0
-
-        # Get ID of user
-        index = df.index[(df['user_id'] == user_id) & (
-                df['week_day'] == today.strftime('%a'))]
-        if devices_off:
-            df.at[index, 'turn_off_end'] = 10
-
-    # Send to DB
-
-    df.reset_index(drop=True, inplace=True)
-    df.reset_index(drop=False, inplace=True)
-    df.rename(columns={'index': 'id'}, inplace=True)
-
-    database_read_write.update_db(df, 'achievements_daily', index_to_col=False)
-
-
-def add_energy_points_wallet(user_id, points):
-    """Adds energy points to user"""
-    df = database_read_write.get_energy_points_wallet()
-    df.set_index('user_id', inplace=True)
-    df.at[user_id, 'points'] += points
-    df.reset_index(inplace=True)
-    df = df[['id', 'user_id', 'points']]
-    database_read_write.update_db(df, 'points_wallet')
-
-
-def _cumulative_savings(user_id):
     """Calculates the cumulative savings of user_id and uploads the value to the achievements_bonus table"""
     df = database_read_write.get_entire_table()
     df = df.loc[df.user_id == user_id]
@@ -290,8 +187,130 @@ def _cumulative_savings(user_id):
         saving = avg - item
         if saving > 0:
             total_savings += saving
+    return total_savings
     df_bonus = database_read_write.get_bonus_table()
-    df_bonus.set_index("user_id", inplace=True)
-    df_bonus.at[user_id, 'cum_savings'] = total_savings
-    df_bonus.insert(1, "user_id", df_bonus.index)
-    database_read_write.update_db(df_bonus, "achievements_bonus")
+
+
+FUNCTIONS = {
+    'lower_energy_con': _lower_energy_con,
+    'turn_off_leave': _turn_off_leave,
+    'turn_off_end': _turn_off_end,
+    'complete_all_daily': _complete_all_daily,
+    'cost_saving': _cost_saving,
+    'schedule_based': _schedule_based,
+    'complete_daily': _complete_daily,
+    'tree_first': _tree_first,
+    'tree_fifth': _tree_fifth,
+    'tree_tenth': _tree_tenth,
+    'redeem_reward': _redeem_reward,
+    'first_remote': _first_remote,
+    'first_schedule': _first_schedule,
+    'first_presence': _first_presence,
+    'cum_savings': _cum_savings,
+}
+
+
+def _add_energy_points_wallet(user_id, points):
+    """Adds energy points to user"""
+    df = database_read_write.get_energy_points_wallet()
+    df.set_index('user_id', inplace=True)
+    df.at[user_id, 'points'] += points
+    df.reset_index(inplace=True)
+    df = df[['id', 'user_id', 'points']]
+    database_read_write.update_db(df, 'points_wallet')
+
+
+def _update_daily_table(achievements_to_update):
+    assert (all(achievement in FUNCTIONS.keys() for achievement in achievements_to_update))
+    df_daily = database_read_write.get_daily_table()
+    user_ids = sorted(df_daily['user_id'].unique())
+    today = database_read_write.get_today().strftime('%a')
+    for user_id in user_ids:
+        ser_daily = df_daily.loc[df_daily.user_id == user_id].loc[today]
+        for col, value in ser_daily.iteritems():
+            if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
+                index = df_daily.index[(df_daily['user_id'] == user_id) & (
+                        df_daily.index == today)]
+                df_daily.at[index, col] = FUNCTIONS[col](user_id)
+                _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+    df_daily.insert(1, 'week_day', df_daily.index)
+    database_read_write.update_db(df_daily, 'achievements_daily')
+
+
+def _update_weekly_table(achievements_to_update):
+    assert (all(achievement in FUNCTIONS.keys() for achievement in achievements_to_update))
+    df_weekly = database_read_write.get_weekly_table()
+    user_ids = sorted(df_weekly['user_id'].unique())
+    for user_id in user_ids:
+        ser_weekly = df_weekly.loc[df_weekly.user_id == user_id].iloc[0]
+        for col, value in ser_weekly.iteritems():
+            if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
+                index = df_weekly.index[(df_weekly['user_id'] == user_id)]
+                df_weekly.at[index, col] = FUNCTIONS[col](user_id)
+                _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+
+
+def _update_bonus_table(achievements_to_update):
+    assert (all(achievement in FUNCTIONS.keys() for achievement in achievements_to_update))
+    df_bonus = database_read_write.get_bonus_table()
+    user_ids = sorted(df_bonus['user_id'].unique())
+    for user_id in user_ids:
+        ser_bonus = df_bonus.loc[df_bonus.user_id == user_id].iloc[0]
+        for col, value in ser_bonus.iteritems():
+            if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
+                index = df_bonus.index[(df_bonus['user_id'] == user_id)]
+                df_bonus.at[index, col] = FUNCTIONS[col](user_id)
+                _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+    database_read_write.update_db(df_bonus, 'achievements_bonus')
+
+def _initialise_achievements():
+    """Run this function every week to reset all achievements achieved"""
+    print(
+        f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Resetting all achievements')
+    df_daily = database_read_write.get_daily_table()
+    df_weekly = database_read_write.get_weekly_table()
+    df_bonus = database_read_write.get_bonus_table()
+    for df in [df_daily, df_weekly, df_bonus]:
+        for col in list(df):
+            if col in FUNCTIONS.keys():
+                df[col] = 0
+    df_daily.insert(1, 'week_day', df_daily.index)
+    database_read_write.update_db(df_daily, 'achievements_daily')
+    database_read_write.update_db(df_weekly, 'achievements_weekly')
+    database_read_write.update_db(df_bonus, 'achievements_bonus')
+
+if __name__ == '__main__':
+    _initialise_achievements()
+
+def achievement_update_everyday_2350():
+    to_update = [
+        'lower_energy_con',
+        'turn_off_end',
+        'complete_all_daily',
+        'tree_first',
+        'tree_fifth',
+        'tree_tenth',
+        'redeem_reward',
+        'first_remote',
+        'first_schedule',
+        'cum_savings'
+    ]
+    _update_daily_table(to_update)
+    _update_bonus_table(to_update)
+
+
+def achievements_update_every_15m():
+    to_update = [
+        'turn_off_leave',
+    ]
+    _update_daily_table(to_update)
+
+
+def achievement_update_every_sunday_2350():
+    to_update = [
+        'cost_saving',
+        'schedule_based',
+        'complete_weekly'
+    ]
+    _update_weekly_table(to_update)
+    _initialise_achievements()
