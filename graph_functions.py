@@ -29,7 +29,7 @@ def _initialise_variables(df):
         return dt.datetime.fromtimestamp(unix_time).strftime('%H')
 
     def generate_kWh(val):
-        return round(val / 1000, 3)
+        return round(val / 60000, 5)
 
     def generate_cost(kwh):
         return round(kwh * singapore_tariff_rate, 4)
@@ -176,7 +176,6 @@ def _hourFunction(df):
     df_hour = df_hour.loc[mask]
     df_hour.reset_index(drop=True, inplace=True)
     # print(df_hour)
-
     # Create new instance of df for Piechart
     df_hour_pie = copy.deepcopy(df_hour)
 
@@ -191,7 +190,7 @@ def _hourFunction(df):
     df_hour.reset_index(drop=True, inplace=True)
     # Optional Convert to %d/%m/%Y
     df_hour['date'] = df_hour['date'].dt.strftime('%d/%m/%Y')
-
+    print(df_hour)
     # Pie Chart
 
     # Aggregate data
@@ -467,5 +466,5 @@ def graph_weekly_monthly_update():
         datetime.now() - start_time))
 
 
-# if __name__ == "__main__":
-#     graph_hourly_update()
+if __name__ == "__main__":
+    graph_hourly_update()
