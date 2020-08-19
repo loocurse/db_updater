@@ -80,8 +80,7 @@ def _complete_all_daily(user_id):
 def _cost_saving(user_id):
     """Achievement: Clock a higher cost savings than last week"""
     # TODO adjust name, read at the end of the week
-    week_view = database_read_write.read_cost_savings()
-    week_view_user = week_view[week_view.user_id == user_id]
+    week_view_user = database_read_write.read_cost_savings(user_id=user_id)
     list = week_view_user['total'][-2:].to_list()
     if not list:
         return 0
