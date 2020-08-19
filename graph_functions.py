@@ -347,7 +347,6 @@ def _cost_savings(df):
             x = pd.Series(ls, name=col)
             output = pd.concat([output, x], axis=1)
         output.index = df.index
-        output.fillna(0, inplace=True)
         output['total'] = output.sum(axis=1)
         return output
 
@@ -356,6 +355,8 @@ def _cost_savings(df):
     month_view = df.groupby(pd.Grouper(freq='M')).sum()
     week_view = process(week_view)
     month_view = process(month_view)
+    week_view.fillna(0, inplace=True)
+    month_view.fillna(0, inplace=True)
 
     week_view['week'] = week_view.index
     week_view['week'] = week_view['week'].dt.strftime('%-d %b')
@@ -465,4 +466,3 @@ def graph_weekly_monthly_update():
     update_db(monthly_costsavings.reset_index(drop=True), 'costsavings_months')
     print('Completed weekly and monthly update in {} seconds.'.format(
         datetime.now() - start_time))
-
