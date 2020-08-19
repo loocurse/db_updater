@@ -45,9 +45,9 @@ def read_all_db(user_id=None):
 def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
+    print(df.head())
     assert sorted(get_table_column(table_name)) == sorted(
         list(df.columns)), "Table columns are not the same"
-    print(df.head())
     input('Proceed?')
     df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
@@ -156,6 +156,16 @@ def get_schedules(user_id):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
         query = f"SELECT * FROM plug_mate_app_scheduledata where user_id = {user_id}"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    return df
+
+
+def custom_query(query):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
         cursor.execute(query)
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
