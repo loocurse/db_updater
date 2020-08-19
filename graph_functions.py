@@ -29,7 +29,7 @@ def _initialise_variables(df):
         return dt.datetime.fromtimestamp(unix_time).strftime('%H')
 
     def generate_kWh(val):
-        return round(val / 1000, 3)
+        return round(val / (1000 * 60), 3)
 
     def generate_cost(kwh):
         return round(kwh * singapore_tariff_rate, 4)
@@ -86,7 +86,7 @@ def _weekFunction(df):
     # idx = df.index[df['BoolCol']] # Search for indexes of value in column
     # df.loc[idx] # Get rows with all the columns
     df_week_random.loc[(df_week_random['date'] > start) & (
-        df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
+            df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
     df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(7))) &
                        (df_week_random['date'] <= (end - dt.timedelta(7))), ['week']] = "{}".format(
         (start - dt.timedelta(7)).strftime('%d %b'))
@@ -284,7 +284,7 @@ def _monthFunction(df):
         end, '%d/%m/%Y').replace(day=1)
 
     start = end_first_day_date - \
-        dateutil.relativedelta.relativedelta(months=5)
+            dateutil.relativedelta.relativedelta(months=5)
 
     mask = (df_month['date'] > start) & (df_month['date'] <= end)
 
@@ -320,7 +320,7 @@ def _monthFunction(df):
 
 def _calculate_cost(power):
     """Convert W into cost"""
-    kwh = power / 1000
+    kwh = power / (1000 * 60)
     singapore_tariff_rate = 0.201
     cost = singapore_tariff_rate * kwh
     return cost
@@ -465,7 +465,6 @@ def graph_weekly_monthly_update():
     update_db(monthly_costsavings.reset_index(drop=True), 'costsavings_months')
     print('Completed weekly and monthly update in {} seconds.'.format(
         datetime.now() - start_time))
-
 
 # if __name__ == "__main__":
 #     graph_hourly_update()
