@@ -185,6 +185,7 @@ def _cum_savings(user_id):
     if value == 0:  # new
         total_savings = 0
         for num, item in enumerate(week_view.tolist()):
+            print(f'Data points {num}')
             avg = sum(week_view.tolist()[:num]) / (num + 1)
             saving = avg - item
             if saving > 0:
@@ -259,16 +260,18 @@ def _update_bonus_table(achievements_to_update):
     df_bonus = database_read_write.get_bonus_table()
     user_ids = sorted(df_bonus['user_id'].unique())
     for user_id in user_ids:
+        print(f'USERID = {user_id}')
         ser_bonus = df_bonus.loc[df_bonus.user_id == user_id].iloc[0]
         for col, value in ser_bonus.iteritems():
-            if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
+            if col in achievements_to_update and col == "cum_savings":
+                index = df_bonus.index[(df_bonus['user_id'] == user_id)]
+                df_bonus.at[index, col] = FUNCTIONS[col](user_id)
+                # TODO add cumulative savings
+            elif col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
                 index = df_bonus.index[(df_bonus['user_id'] == user_id)]
                 df_bonus.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
-            elif col in achievements_to_update and col == "cum_savings":
-                index = df_bonus.index[(df_bonus['user_id'] == user_id)]
-                df_bonus.at[index, col] = FUNCTIONS[col](user_id)
-                _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+
 
     database_read_write.update_db(df_bonus, 'achievements_bonus')
 
