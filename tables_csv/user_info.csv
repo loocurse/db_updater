@@ -1,0 +1,6 @@
+id,user_id,user_name,phone,email,desk_loc,occupation,gender,birthday,occ_profile
+1,1,zeyneptekler,,,feynman room,researcher,female,,
+2,2,raymondlow,,,feynman room,researcher,male,,
+3,3,zaidytang,84482199,farid_zaidy@mymail.sutd.edu.sg,main office,student,male,16-Jun,
+4,4,lucasng,9783 6745,lucas_ng@mymail.sutd.edu.sg,main office,student,male,20-Mar,
+5,5,mirabeltukiman,93372639,mirabel_tukiman@mymail.sutd.edu.sg,main office,student,female,24-May,

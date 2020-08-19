@@ -12,6 +12,7 @@ def check_remote_control():
     Checks the database for the device state and detect if remote control is activated.
     Checking frequency: 5 seconds
     """
+    print('[{}] Checking remote control settings'.format(datetime.now()))
 
     # Database and Fibaro credentials
     user = 'dadtkzpuzwfows'
@@ -33,6 +34,9 @@ def check_remote_control():
         'tables_csv/remote_control_setting.csv')
 
     try:
+        # Initialise connection variable
+        connection = None
+
         # Connect to PostgreSQL database
         connection = psycopg2.connect(user=user, password=database_password, host=host,
                                       port=port, database=database)
@@ -74,14 +78,14 @@ def check_remote_control():
         else:
             pass
 
-    except(Exception, psycopg2.Error) as error:
-        if (connection):
-            print('Error: ', error)
-
-    finally:
+        # Closing connection
         if (connection):
             cursor.close()
             connection.close()
+
+    except(Exception, psycopg2.Error) as error:
+        if (connection):
+            print('Error: ', error)
 
     return None
 
@@ -116,6 +120,7 @@ def update_device_state():
     Checks the state of each smart meter from Fibaro and updates the database if there are any changes.
     Checking frequency: 1 minute
     """
+    print('[{}] Update device state'.format(datetime.now()))
 
     # Database and Fibaro credentials
     user = 'dadtkzpuzwfows'
@@ -140,6 +145,9 @@ def update_device_state():
 
     def update_database(meter_ids, device_states):
         try:
+            # Initialise connection variable
+            connection = None
+
             # Connect to database
             connection = psycopg2.connect(user=user, password=database_password, host=host,
                                           port=port, database=database)
@@ -164,14 +172,14 @@ def update_device_state():
 
             connection.commit()
 
-        except(Exception, psycopg2.Error) as error:
-            if (connection):
-                print('Error: ', error)
-
-        finally:
+            # Closing connection
             if (connection):
                 cursor.close()
                 connection.close()
+
+        except(Exception, psycopg2.Error) as error:
+            if (connection):
+                print('Error: ', error)
 
         return None
 
@@ -198,6 +206,7 @@ def schedule_control():
     before switching off any devices, do an additional check to see if user is round.
     Checking frequency: 15 minutes
     """
+    print('[{}] Checking schedule controls'.format(datetime.now()))
 
     # Database and Fibaro credentials
     user = 'dadtkzpuzwfows'
@@ -258,6 +267,9 @@ def schedule_control():
 
     # Obtain the schedule for all users and device types
     try:
+        # Initialise connection variable
+        connection = None
+
         # Connect to database
         connection = psycopg2.connect(user=user, password=database_password, host=host,
                                       port=port, database=database)
@@ -277,14 +289,14 @@ def schedule_control():
         check_schedule(schedules, current_time, day_of_week, 'On')
         check_schedule(schedules, current_time, day_of_week, 'Off')
 
-    except(Exception, psycopg2.Error) as error:
-        if (connection):
-            print('Error: ', error)
-
-    finally:
+        # Closing connection
         if (connection):
             cursor.close()
             connection.close()
+
+    except(Exception, psycopg2.Error) as error:
+        if (connection):
+            print('Error: ', error)
 
     return None
 
@@ -294,6 +306,7 @@ def check_user_arrival():
     Checks the arrival of each user to his desk and switch ON his devices.
     Checking frequency: 5 seconds
     """
+    print('[{}] Checking user arrival'.format(datetime.now()))
 
     # Database and Fibaro credentials
     user = 'dadtkzpuzwfows'
@@ -314,6 +327,9 @@ def check_user_arrival():
     last_recorded_presence = pd.read_csv('tables_csv/user_presence.csv')
 
     try:
+        # Initialise connection variable
+        connection = None
+
         # Connect to PostgreSQL database
         connection = psycopg2.connect(user=user, password=database_password, host=host,
                                       port=port, database=database)
@@ -361,14 +377,14 @@ def check_user_arrival():
         else:
             pass
 
-    except(Exception, psycopg2.Error) as error:
-        if (connection):
-            print('Error: ', error)
-
-    finally:
+        # Closing connection
         if (connection):
             cursor.close()
             connection.close()
+
+    except(Exception, psycopg2.Error) as error:
+        if (connection):
+            print('Error: ', error)
 
     return None
 
@@ -378,6 +394,7 @@ def check_user_departure():
     Checks the departure of the user from his desk and switches OFF his devices
     Checking frequency: 1 minute
     """
+    print('[{}] Checking user departure'.format(datetime.now()))
 
     # Database and Fibaro credentials
     user = 'dadtkzpuzwfows'
@@ -427,6 +444,9 @@ def check_user_departure():
     last_recorded_presence = pd.read_csv('tables_csv/user_presence.csv')
 
     try:
+        # Initialise connection variable
+        connection = None
+
         # Connect to PostgreSQL database
         connection = psycopg2.connect(user=user, password=database_password, host=host,
                                       port=port, database=database)
@@ -479,13 +499,13 @@ def check_user_departure():
         last_recorded_presence.to_csv(
             'tables_csv/user_presence.csv', index=False)
 
-    except(Exception, psycopg2.Error) as error:
-        if (connection):
-            print('Error: ', error)
-
-    finally:
+        # Closing connection
         if (connection):
             cursor.close()
             connection.close()
+
+    except(Exception, psycopg2.Error) as error:
+        if (connection):
+            print('Error: ', error)
 
     return None

@@ -29,7 +29,7 @@ def _initialise_variables(df):
         return dt.datetime.fromtimestamp(unix_time).strftime('%H')
 
     def generate_kWh(val):
-        return round(val / 60000, 5)
+        return round(val / (1000 * 60), 3)
 
     def generate_cost(kwh):
         return round(kwh * singapore_tariff_rate, 4)
@@ -319,7 +319,7 @@ def _monthFunction(df):
 
 def _calculate_cost(power):
     """Convert W into cost"""
-    kwh = power / 1000
+    kwh = power / (1000 * 60)
     singapore_tariff_rate = 0.201
     cost = singapore_tariff_rate * kwh
     return cost
@@ -433,19 +433,19 @@ def graph_weekly_monthly_update():
     user_ids = sorted(df['user_id'].unique())
 
     for user_id in user_ids:
-        # line_week, pie_week = _weekFunction(
-        #     df[df['user_id'] == user_id].reset_index(drop=True))
-        # line_week.insert(0, 'user_id', user_id)
-        # pie_week.insert(0, 'user_id', user_id)
-        # weekly_line = pd.concat([weekly_line, line_week], ignore_index=True)
-        # weekly_pie = pd.concat([weekly_pie, pie_week], ignore_index=True)
-        #
-        # line_month, pie_month = _monthFunction(
-        #     df[df['user_id'] == user_id].reset_index(drop=True))
-        # line_month.insert(0, 'user_id', user_id)
-        # pie_month.insert(0, 'user_id', user_id)
-        # monthly_line = pd.concat([monthly_line, line_month], ignore_index=True)
-        # monthly_pie = pd.concat([monthly_pie, pie_month], ignore_index=True)
+        line_week, pie_week = _weekFunction(
+            df[df['user_id'] == user_id].reset_index(drop=True))
+        line_week.insert(0, 'user_id', user_id)
+        pie_week.insert(0, 'user_id', user_id)
+        weekly_line = pd.concat([weekly_line, line_week], ignore_index=True)
+        weekly_pie = pd.concat([weekly_pie, pie_week], ignore_index=True)
+
+        line_month, pie_month = _monthFunction(
+            df[df['user_id'] == user_id].reset_index(drop=True))
+        line_month.insert(0, 'user_id', user_id)
+        pie_month.insert(0, 'user_id', user_id)
+        monthly_line = pd.concat([monthly_line, line_month], ignore_index=True)
+        monthly_pie = pd.concat([monthly_pie, pie_month], ignore_index=True)
 
         savings_week, savings_month = _cost_savings(
             df[df['user_id'] == user_id].reset_index(drop=True))
@@ -456,15 +456,19 @@ def graph_weekly_monthly_update():
         monthly_costsavings = pd.concat(
             [monthly_costsavings, savings_month], ignore_index=True)
 
-    # update_db(weekly_line.reset_index(drop=True), 'historical_weeks_line')
-    # update_db(weekly_pie.reset_index(drop=True), 'historical_weeks_pie')
-    # update_db(monthly_line.reset_index(drop=True), 'historical_months_line')
-    # update_db(monthly_pie.reset_index(drop=True), 'historical_months_pie')
+    update_db(weekly_line.reset_index(drop=True), 'historical_weeks_line')
+    update_db(weekly_pie.reset_index(drop=True), 'historical_weeks_pie')
+    update_db(monthly_line.reset_index(drop=True), 'historical_months_line')
+    update_db(monthly_pie.reset_index(drop=True), 'historical_months_pie')
     update_db(weekly_costsavings.reset_index(drop=True), 'costsavings_weeks')
     update_db(monthly_costsavings.reset_index(drop=True), 'costsavings_months')
     print('Completed weekly and monthly update in {} seconds.'.format(
         datetime.now() - start_time))
 
 
+<< << << < HEAD
+
 if __name__ == "__main__":
     graph_hourly_update()
+== == == =
+>>>>>> > a58365449d72a2ed591a44f5828361d9c55d5f0f

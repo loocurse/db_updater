@@ -80,8 +80,7 @@ def _complete_all_daily(user_id):
 def _cost_saving(user_id):
     """Achievement: Clock a higher cost savings than last week"""
     # TODO adjust name, read at the end of the week
-    week_view = database_read_write.read_cost_savings()
-    week_view_user = week_view[week_view.user_id == user_id]
+    week_view_user = database_read_write.read_cost_savings(user_id=user_id)
     list = week_view_user['total'][-2:].to_list()
     if not list:
         return 0
@@ -100,7 +99,6 @@ def _schedule_based(user_id):
 def _complete_daily(user_id):
     """Achievement: Complete all daily achievements for 4 days of the week"""
     # TODO turn off checking on sat
-    # TODO remove daily table from daily achievements on weekends
     if database_read_write.get_today() not in ['Thu', 'Fri']:
         return 0
     else:
@@ -174,21 +172,46 @@ def _first_presence(user_id):
 
 
 def _cum_savings(user_id):
-    """Calculates the cumulative savings of user_id and uploads the value to the achievements_bonus table"""
-    df = database_read_write.get_entire_table()
-    df = df.loc[df.user_id == user_id]
-    df['date'] = pd.to_datetime(df['date'])
-    df = df.set_index('date')
-    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()['power']
-    # week_view = week_view.apply(_calculate_cost)
-    total_savings = 0
-    for num, item in enumerate(week_view.tolist()):
-        avg = sum(week_view.tolist()[:num]) / (num + 1)
-        saving = avg - item
-        if saving > 0:
-            total_savings += saving
-    return total_savings
+    """Calculates the cumulative savings of user_id"""
     df_bonus = database_read_write.get_bonus_table()
+    df = df_bonus.loc[df_bonus.user_id == user_id]
+    existing_value = df.iloc[0]['cum_savings']
+    # Getting new value
+    df = database_read_write.read_all_db(user_id=user_id)
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.groupby(['date', 'device_type']).sum().reset_index()
+    df = df.pivot(index='date', columns='device_type', values='power')
+
+    def process(df):
+        output = pd.DataFrame()
+        for col in list(df):
+            ls = []
+            for index, row in df.iterrows():
+                value = row[col]
+                location = np.where(df.index == index)[0][0]
+                average = df[col][:location].mean()
+                value -= average
+                ls.append(value)
+            x = pd.Series(ls, name=col)
+            output = pd.concat([output, x], axis=1)
+        output.index = df.index
+        output.fillna(0, inplace=True)
+        output['total'] = output.sum(axis=1)
+        print(output['total'])
+        return output
+
+    # Aggregate data based on view & set index
+    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()
+    week_view = process(week_view)
+    if existing_value == 0:
+        week_view = week_view[:-1]['total'].tolist()
+        total_savings = sum([x for x in week_view if x > 0])
+        return total_savings
+    else:
+        total_new_savings = week_view.iloc[-1]['total']
+        if total_new_savings > 0:
+            existing_value += total_new_savings
+        return existing_value
 
 
 FUNCTIONS = {
@@ -255,16 +278,23 @@ def _update_bonus_table(achievements_to_update):
     df_bonus = database_read_write.get_bonus_table()
     user_ids = sorted(df_bonus['user_id'].unique())
     for user_id in user_ids:
+        print(f'USERID = {user_id}')
         ser_bonus = df_bonus.loc[df_bonus.user_id == user_id].iloc[0]
         for col, value in ser_bonus.iteritems():
-            if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
+            if col in achievements_to_update and col == "cum_savings":
+                index = df_bonus.index[(df_bonus['user_id'] == user_id)]
+                df_bonus.at[index, col] = FUNCTIONS[col](user_id)
+                # TODO add cumulative savings
+            elif col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
                 index = df_bonus.index[(df_bonus['user_id'] == user_id)]
                 df_bonus.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+
     database_read_write.update_db(df_bonus, 'achievements_bonus')
 
+
 def _initialise_achievements():
-    """Run this function every week to reset all achievements achieved"""
+    """Run this function every week to reset all achievements achieved, except cum_savings"""
     print(
         f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Resetting all achievements')
     df_daily = database_read_write.get_daily_table()
@@ -272,15 +302,13 @@ def _initialise_achievements():
     df_bonus = database_read_write.get_bonus_table()
     for df in [df_daily, df_weekly, df_bonus]:
         for col in list(df):
-            if col in FUNCTIONS.keys():
+            if col in FUNCTIONS.keys() and col != "cum_savings":
                 df[col] = 0
     df_daily.insert(1, 'week_day', df_daily.index)
     database_read_write.update_db(df_daily, 'achievements_daily')
     database_read_write.update_db(df_weekly, 'achievements_weekly')
     database_read_write.update_db(df_bonus, 'achievements_bonus')
 
-if __name__ == '__main__':
-    _initialise_achievements()
 
 def achievement_update_everyday_2350():
     to_update = [
@@ -310,7 +338,8 @@ def achievement_update_every_sunday_2350():
     to_update = [
         'cost_saving',
         'schedule_based',
-        'complete_weekly'
+        'complete_weekly',
+        'cum_savings',
     ]
     _update_weekly_table(to_update)
     _initialise_achievements()

@@ -17,18 +17,6 @@ engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(CONNECTION_PARAMS['u
                                                             CONNECTION_PARAMS['database']))
 
 
-def get_entire_table():
-    """Reads the SQL database for the entire output and outputs the dataframe with cols stated below"""
-    connection = psycopg2.connect(**CONNECTION_PARAMS)
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM power_energy_consumption")
-        results = cursor.fetchall()
-        colnames = [desc[0] for desc in cursor.description]
-    df = pd.DataFrame(results, columns=colnames)
-    df['date'] = pd.to_datetime(df['date'])
-    return df
-
-
 def get_table_column(table_name):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
@@ -37,23 +25,22 @@ def get_table_column(table_name):
     return colnames
 
 
-def read_all_db():
+def read_all_db(user_id=None):
     """Reads the SQL database for the last 6 months and outputs the dataframe with cols stated below"""
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM power_energy_consumption "
-                       "WHERE date >= date_trunc('hour', now()) - interval '6 month' AND "
-                       "date < date_trunc('hour', now())")
+        query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
+                "interval '6 month' AND date < date_trunc('hour', now())"
+        if user_id:
+            query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
+                f"interval '6 month' AND date < date_trunc('hour', now()) AND user_id = {user_id}"
+        cursor.execute(query)
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     df['date'] = pd.to_datetime(df['date'])
-    # print(df)
+
     return df
-
-
-# if __name__ == "__main__":
-#     read_all_db().to_csv('power_energy_consumption.csv')
 
 
 def update_db(df, table_name, index_to_col=False):
@@ -61,14 +48,19 @@ def update_db(df, table_name, index_to_col=False):
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
     assert sorted(get_table_column(table_name)) == sorted(
         list(df.columns)), "Table columns are not the same"
+    print(df.head())
+    input('Proceed?')
     df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
-def read_cost_savings():
+def read_cost_savings(user_id=None):
     """Extracts the cost savings graph and returns as a dataframe"""
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM costsavings_weeks")
+        query = "SELECT * FROM costsavings_weeks"
+        if user_id:
+            query = f"SELECT * FROM costsavings_weeks where user_id = {user_id}"
+        cursor.execute(query)
         colnames = [desc[0] for desc in cursor.description]
         results = cursor.fetchall()
     return pd.DataFrame(results, columns=colnames)
