@@ -176,24 +176,43 @@ def _cum_savings(user_id):
     """Calculates the cumulative savings of user_id"""
     df_bonus = database_read_write.get_bonus_table()
     df = df_bonus.loc[df_bonus.user_id == user_id]
-    value = df.iloc[0]['cum_savings']
-    df = database_read_write.get_entire_table()
-    df = df.loc[df.user_id == user_id]
+    existing_value = df.iloc[0]['cum_savings']
+    # Getting new value
+    df = database_read_write.read_all_db(user_id=user_id)
     df['date'] = pd.to_datetime(df['date'])
-    df = df.set_index('date')
-    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()['power']
-    if value == 0:  # new
-        total_savings = 0
-        for num, item in enumerate(week_view.tolist()):
-            print(f'Data points {num}')
-            avg = sum(week_view.tolist()[:num]) / (num + 1)
-            saving = avg - item
-            if saving > 0:
-                total_savings += saving
-        return round(total_savings, 2)
+    df = df.groupby(['date', 'device_type']).sum().reset_index()
+    df = df.pivot(index='date', columns='device_type', values='power')
+
+    def process(df):
+        output = pd.DataFrame()
+        for col in list(df):
+            ls = []
+            for index, row in df.iterrows():
+                value = row[col]
+                location = np.where(df.index == index)[0][0]
+                average = df[col][:location].mean()
+                value -= average
+                ls.append(value)
+            x = pd.Series(ls, name=col)
+            output = pd.concat([output, x], axis=1)
+        output.index = df.index
+        output.fillna(0, inplace=True)
+        output['total'] = output.sum(axis=1)
+        print(output['total'])
+        return output
+
+    # Aggregate data based on view & set index
+    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()
+    week_view = process(week_view)
+    if existing_value == 0:
+        week_view = week_view[:-1]['total'].tolist()
+        total_savings = sum([x for x in week_view if x > 0])
+        return total_savings
     else:
-        value += week_view.iloc[-1].get(0)
-        return round(value, 2)
+        total_new_savings = week_view.iloc[-1]['total']
+        if total_new_savings > 0:
+            existing_value += total_new_savings
+        return existing_value
 
 
 FUNCTIONS = {
@@ -271,7 +290,6 @@ def _update_bonus_table(achievements_to_update):
                 index = df_bonus.index[(df_bonus['user_id'] == user_id)]
                 df_bonus.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
-
 
     database_read_write.update_db(df_bonus, 'achievements_bonus')
 
