@@ -351,12 +351,12 @@ def _cost_savings(df):
         return output
 
     # Aggregate data based on view & set index
-    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()
-    month_view = df.groupby(pd.Grouper(freq='M')).sum()
+    week_view = df.groupby(pd.Grouper(freq='W-MON', label='left')).sum()
+    month_view = df.groupby(pd.Grouper(freq='M', label='left')).sum()
     week_view = process(week_view)
     month_view = process(month_view)
-    week_view.fillna(0, inplace=True)
-    month_view.fillna(0, inplace=True)
+    # week_view.fillna(0, inplace=True)
+    # month_view.fillna(0, inplace=True)
 
     week_view['week'] = week_view.index
     week_view['week'] = week_view['week'].dt.strftime('%-d %b')
@@ -458,6 +458,8 @@ def graph_weekly_monthly_update():
         monthly_costsavings = pd.concat(
             [monthly_costsavings, savings_month], ignore_index=True)
 
+    weekly_costsavings.fillna(0, inplace=True)
+    monthly_costsavings.fillna(0, inplace=True)
     update_db(weekly_line.reset_index(drop=True), 'historical_weeks_line')
     update_db(weekly_pie.reset_index(drop=True), 'historical_weeks_pie')
     update_db(monthly_line.reset_index(drop=True), 'historical_months_line')
