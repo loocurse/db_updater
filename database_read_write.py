@@ -37,19 +37,22 @@ def get_table_column(table_name):
     return colnames
 
 
-def read_all_db():
+def read_all_db(user_id=None):
     """Reads the SQL database for the last 6 months and outputs the dataframe with cols stated below"""
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM power_energy_consumption "
-                       "WHERE date >= date_trunc('hour', now()) - interval '6 month' AND "
-                       "date < date_trunc('hour', now())")
+        query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
+                "interval '6 month' AND date < date_trunc('hour', now())"
+        if user_id:
+            query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
+                f"interval '6 month' AND date < date_trunc('hour', now()) AND user_id = {user_id}"
+        cursor.execute(query)
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     df['date'] = pd.to_datetime(df['date'])
-    print(df)
     return df
+
 
 
 def update_db(df, table_name, index_to_col=False):
