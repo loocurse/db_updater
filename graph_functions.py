@@ -346,15 +346,16 @@ def _cost_savings(df):
             x = pd.Series(ls, name=col)
             output = pd.concat([output, x], axis=1)
         output.index = df.index
-        output.fillna(0, inplace=True)
         output['total'] = output.sum(axis=1)
         return output
 
     # Aggregate data based on view & set index
-    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()
-    month_view = df.groupby(pd.Grouper(freq='M')).sum()
+    week_view = df.groupby(pd.Grouper(freq='W-MON', label='left')).sum()
+    month_view = df.groupby(pd.Grouper(freq='M', label='left')).sum()
     week_view = process(week_view)
     month_view = process(month_view)
+    # week_view.fillna(0, inplace=True)
+    # month_view.fillna(0, inplace=True)
 
     week_view['week'] = week_view.index
     week_view['week'] = week_view['week'].dt.strftime('%-d %b')
@@ -456,6 +457,8 @@ def graph_weekly_monthly_update():
         monthly_costsavings = pd.concat(
             [monthly_costsavings, savings_month], ignore_index=True)
 
+    weekly_costsavings.fillna(0, inplace=True)
+    monthly_costsavings.fillna(0, inplace=True)
     update_db(weekly_line.reset_index(drop=True), 'historical_weeks_line')
     update_db(weekly_pie.reset_index(drop=True), 'historical_weeks_pie')
     update_db(monthly_line.reset_index(drop=True), 'historical_months_line')
@@ -464,11 +467,3 @@ def graph_weekly_monthly_update():
     update_db(monthly_costsavings.reset_index(drop=True), 'costsavings_months')
     print('Completed weekly and monthly update in {} seconds.'.format(
         datetime.now() - start_time))
-
-
-<< << << < HEAD
-
-if __name__ == "__main__":
-    graph_hourly_update()
-== == == =
->>>>>> > a58365449d72a2ed591a44f5828361d9c55d5f0f

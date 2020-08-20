@@ -4,15 +4,15 @@ from database_read_write import *
 from control_functions import *
 import schedule
 
-
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
                          password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
                          host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
                          port='5432')
 
-
 if __name__ == '__main__':
+    if DEBUGGING:
+        print('WARNING: Debugging mode is turned on, database will not be updated')
     # Update dashboard
     schedule.every().hour.do(graph_hourly_update)
     schedule.every().day.do(graph_daily_update)

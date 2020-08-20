@@ -3,6 +3,7 @@ import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
 
+DEBUGGING = False  # Turn on for debugging mode
 
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
@@ -33,7 +34,7 @@ def read_all_db(user_id=None):
                 "interval '6 month' AND date < date_trunc('hour', now())"
         if user_id:
             query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
-                f"interval '6 month' AND date < date_trunc('hour', now()) AND user_id = {user_id}"
+                    f"interval '6 month' AND date < date_trunc('hour', now()) AND user_id = {user_id}"
         cursor.execute(query)
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
@@ -45,12 +46,20 @@ def read_all_db(user_id=None):
 
 def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
-    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
-    assert sorted(get_table_column(table_name)) == sorted(
-        list(df.columns)), "Table columns are not the same"
-    print(df.head())
-    input('Proceed?')
-    df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
+    if DEBUGGING:
+        print(
+            f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [DEBUGGING] Table <{table_name}>')
+        print(df.head())
+        assert sorted(get_table_column(table_name)) == sorted(
+            list(df.columns)), "Table columns are not the same"
+    else:
+        print(
+            f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
+        print(df.head())
+        assert sorted(get_table_column(table_name)) == sorted(
+            list(df.columns)), "Table columns are not the same"
+        # input('Proceed?')
+        df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
 def read_cost_savings(user_id=None):
@@ -64,6 +73,17 @@ def read_cost_savings(user_id=None):
         colnames = [desc[0] for desc in cursor.description]
         results = cursor.fetchall()
     return pd.DataFrame(results, columns=colnames)
+
+
+def get_user_ids():
+    """Returns a list of all the user_ids"""
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = "SELECT DISTINCT user_id FROM power_energy_consumption"
+        cursor.execute(query)
+        colnames = [desc[0] for desc in cursor.description]
+        results = cursor.fetchall()
+    return sorted([x[0] for x in results])
 
 
 def get_daily_table():
@@ -162,15 +182,6 @@ def get_schedules(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
-
-# def achievements_update_every_15m():
-#     to_update = [
-#         'turn_off_leave',
-#     ]
-#   _update_daily_table(to_update)
-#   _notifications_update('daily',to_update)
-#   _notifications_update('weekly',to_update)
-#   _notifications_update('bonus',to_update)
 
 
 def notifications_update(achievement_type, achievements_list_to_update):
@@ -572,7 +583,27 @@ def _check_update_notifications(df, user_id, sql_notif_df, all_notif_df, achieve
     return sql_notif_df
 
 
-if __name__ == "__main__":
-    notifications_update('daily', to_update)
-    notifications_update('weekly', to_update)
-    notifications_update('bonus', to_update)
+# if __name__ == "__main__":
+#     notifications_update('daily', to_update)
+#     notifications_update('weekly', to_update)
+#     notifications_update('bonus', to_update)
+
+def get_presence_states(user_id):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = f"SELECT * FROM plug_mate_app_presencedata where user_id = {user_id}"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    return df
+
+
+def custom_query(query):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    return df
