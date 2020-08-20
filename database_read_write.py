@@ -169,7 +169,16 @@ def get_schedules(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
-
+              
+def get_presence_states(user_id):
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = f"SELECT * FROM plug_mate_app_presencedata where user_id = {user_id}"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(results, columns=colnames)
+    return df
 
 def custom_query(query):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
