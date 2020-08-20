@@ -3,8 +3,7 @@ import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
 
-DEBUGGING = True  # Turn on for debugging mode
-
+DEBUGGING = False  # Turn on for debugging mode
 
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
@@ -35,7 +34,7 @@ def read_all_db(user_id=None):
                 "interval '6 month' AND date < date_trunc('hour', now())"
         if user_id:
             query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
-                f"interval '6 month' AND date < date_trunc('hour', now()) AND user_id = {user_id}"
+                    f"interval '6 month' AND date < date_trunc('hour', now()) AND user_id = {user_id}"
         cursor.execute(query)
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
@@ -71,6 +70,16 @@ def read_cost_savings(user_id=None):
         colnames = [desc[0] for desc in cursor.description]
         results = cursor.fetchall()
     return pd.DataFrame(results, columns=colnames)
+
+def get_user_ids():
+    """Returns a list of all the user_ids"""
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+    with connection.cursor() as cursor:
+        query = "SELECT DISTINCT user_id FROM power_energy_consumption"
+        cursor.execute(query)
+        colnames = [desc[0] for desc in cursor.description]
+        results = cursor.fetchall()
+    return sorted([x[0] for x in results])
 
 
 def get_daily_table():
@@ -169,7 +178,8 @@ def get_schedules(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
-              
+
+
 def get_presence_states(user_id):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
@@ -179,6 +189,7 @@ def get_presence_states(user_id):
         colnames = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(results, columns=colnames)
     return df
+
 
 def custom_query(query):
     connection = psycopg2.connect(**CONNECTION_PARAMS)

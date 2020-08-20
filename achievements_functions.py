@@ -266,6 +266,14 @@ def _add_energy_points_wallet(user_id, points):
     database_read_write.update_db(df, 'points_wallet')
 
 
+def add_cost_saving_to_energy_points():
+    for user_id in database_read_write.get_user_ids():
+        df = database_read_write.read_cost_savings(user_id=user_id)
+        savings = df['total'].iloc[-1]
+        energy_points = savings * 10 if savings > 0 else savings * 5
+        _add_energy_points_wallet(user_id, energy_points)
+
+
 def _update_daily_table(achievements_to_update):
     assert (all(achievement in FUNCTIONS.keys() for achievement in achievements_to_update))
     df_daily = database_read_write.get_daily_table()
@@ -366,6 +374,4 @@ def achievement_update_every_sunday_2350():
     ]
     _update_weekly_table(to_update)
     _initialise_achievements()
-
-    # Add energy points based on week's cost saving
-    database_read_write.read_cost_savings()
+    add_cost_saving_to_energy_points()
