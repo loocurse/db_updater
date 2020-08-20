@@ -5,6 +5,7 @@ from control_functions import *
 import schedule
 
 
+
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
                          password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
@@ -35,6 +36,7 @@ if __name__ == '__main__':
     schedule.every().hour.at(':45').do(schedule_control)
     schedule.every(5).seconds.do(check_user_arrival)
     schedule.every().minutes.do(check_user_departure)
-
+    if DEBUGGING:
+        print('WARNING: Debugging mode is turned on, database is not actively updated')
     while True:
         schedule.run_pending()
