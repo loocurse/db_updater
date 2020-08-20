@@ -284,8 +284,7 @@ def _update_daily_table(achievements_to_update):
         for col, value in ser_daily.iteritems():
             if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
                 index = df_daily.index[(df_daily['user_id'] == user_id) & (
-                        df_daily.index == today)]
-                print(index, col, FUNCTIONS[col](user_id))
+                        df_daily.index == today)].tolist()[0]
                 df_daily.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
     df_daily.insert(1, 'week_day', df_daily.index)
@@ -300,7 +299,7 @@ def _update_weekly_table(achievements_to_update):
         ser_weekly = df_weekly.loc[df_weekly.user_id == user_id].iloc[0]
         for col, value in ser_weekly.iteritems():
             if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
-                index = df_weekly.index[(df_weekly['user_id'] == user_id)]
+                index = df_weekly.index[(df_weekly['user_id'] == user_id)].tolist()[0]
                 df_weekly.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
 
@@ -313,11 +312,10 @@ def _update_bonus_table(achievements_to_update):
         ser_bonus = df_bonus.loc[df_bonus.user_id == user_id].iloc[0]
         for col, value in ser_bonus.iteritems():
             if col in achievements_to_update and col == "cum_savings":
-                index = df_bonus.index[(df_bonus['user_id'] == user_id)]
+                index = df_bonus.index[(df_bonus['user_id'] == user_id)].tolist()[0]
                 df_bonus.at[index, col] = FUNCTIONS[col](user_id)
-                # TODO add cumulative savings
             elif col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
-                index = df_bonus.index[(df_bonus['user_id'] == user_id)]
+                index = df_bonus.index[(df_bonus['user_id'] == user_id)].tolist()[0]
                 df_bonus.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
 
