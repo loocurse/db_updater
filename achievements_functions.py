@@ -70,7 +70,9 @@ def _turn_off_end(user_id):
 def _daily_presence(user_id):
     """DONE BY MIRABEL
     Achievement: Activate presence-based control for your devices today"""
-    condition = False
+    df = database_read_write.get_presence_states(user_id)
+    number_of_off = len(df.loc[df['presence_setting'] === 1000000])
+    condition = number_of_off != 0
     return points['daily_presence'] if condition else 0
 
 
