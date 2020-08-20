@@ -244,7 +244,8 @@ def _add_energy_points_wallet(user_id, points):
 
 
 def _update_daily_table(achievements_to_update):
-    assert (all(achievement in FUNCTIONS.keys() for achievement in achievements_to_update))
+    assert (all(achievement in FUNCTIONS.keys()
+                for achievement in achievements_to_update))
     df_daily = database_read_write.get_daily_table()
     user_ids = sorted(df_daily['user_id'].unique())
     today = database_read_write.get_today().strftime('%a')
@@ -253,7 +254,7 @@ def _update_daily_table(achievements_to_update):
         for col, value in ser_daily.iteritems():
             if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
                 index = df_daily.index[(df_daily['user_id'] == user_id) & (
-                        df_daily.index == today)]
+                    df_daily.index == today)]
                 df_daily.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
     df_daily.insert(1, 'week_day', df_daily.index)
@@ -261,7 +262,8 @@ def _update_daily_table(achievements_to_update):
 
 
 def _update_weekly_table(achievements_to_update):
-    assert (all(achievement in FUNCTIONS.keys() for achievement in achievements_to_update))
+    assert (all(achievement in FUNCTIONS.keys()
+                for achievement in achievements_to_update))
     df_weekly = database_read_write.get_weekly_table()
     user_ids = sorted(df_weekly['user_id'].unique())
     for user_id in user_ids:
@@ -274,7 +276,8 @@ def _update_weekly_table(achievements_to_update):
 
 
 def _update_bonus_table(achievements_to_update):
-    assert (all(achievement in FUNCTIONS.keys() for achievement in achievements_to_update))
+    assert (all(achievement in FUNCTIONS.keys()
+                for achievement in achievements_to_update))
     df_bonus = database_read_write.get_bonus_table()
     user_ids = sorted(df_bonus['user_id'].unique())
     for user_id in user_ids:
@@ -325,6 +328,8 @@ def achievement_update_everyday_2350():
     ]
     _update_daily_table(to_update)
     _update_bonus_table(to_update)
+    database_read_write.notifications_update('daily', to_update)
+    database_read_write.notifications_update('bonus', to_update)
 
 
 def achievements_update_every_15m():
@@ -332,6 +337,7 @@ def achievements_update_every_15m():
         'turn_off_leave',
     ]
     _update_daily_table(to_update)
+    database_read_write.notifications_update('daily', to_update)
 
 
 def achievement_update_every_sunday_2350():
@@ -343,3 +349,4 @@ def achievement_update_every_sunday_2350():
     ]
     _update_weekly_table(to_update)
     _initialise_achievements()
+    database_read_write.notifications_update('weekly', to_update)
