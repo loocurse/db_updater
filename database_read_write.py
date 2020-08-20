@@ -354,7 +354,7 @@ def _check_update_notifications(df, user_id, sql_notif_df, all_notif_df, achieve
             # achievements_list_to_update
 
             # Every Day
-            if col in ["lower_energy_con", "turn_off_end", "complete_all_daily, daily_presence,daily_schedule,daily_remote"]:  # End of day mark
+            if col in ["lower_energy_con", "turn_off_end", "complete_all_daily", "daily_presence", "daily_schedule", "daily_remote"]:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
@@ -428,8 +428,7 @@ def _check_update_notifications(df, user_id, sql_notif_df, all_notif_df, achieve
 
                 # print(sql_notif_df)
 
-    '''WEEKLY'''
-    elif achievement_type == 'weekly':
+    elif achievement_type == "weekly":
         NewDict = {}
 
         today = get_today().strftime('%a')
@@ -451,7 +450,7 @@ def _check_update_notifications(df, user_id, sql_notif_df, all_notif_df, achieve
             # achievements_list_to_update
 
             # Every Sunday
-            if col in ["cost_saving, schedule_based"]:  # End of day mark
+            if col in ["cost_saving", "schedule_based"]:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
@@ -522,7 +521,7 @@ def _check_update_notifications(df, user_id, sql_notif_df, all_notif_df, achieve
                     # Append new dict to table.notifications col (list) on database.
                 else:
                     print("Something wrong with your condition")
-    '''BONUS'''
+
     elif achievement_type == 'bonus':
         NewDict = {}
 
@@ -545,7 +544,7 @@ def _check_update_notifications(df, user_id, sql_notif_df, all_notif_df, achieve
             # achievements_list_to_update
 
             # Every Day
-            if col in ["cost_saving, schedule_based"]:  # End of day mark
+            if col in ["cost_saving", "schedule_based"]:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
