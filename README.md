@@ -3,8 +3,8 @@
 ## Schedule
 | Type   | Activity           | Description                                                                                | Scheduling frequency     |
 |--------|--------------------|--------------------------------------------------------------------------------------------|----------------------    |
-| daily  | daily_presence     | Activate presence-based control for your devices today                                     | Triggered by User Interaction |
-| daily  | daily_schedule     | Use schedule-based control for your devices today                                          | Triggered by User Interaction |
+| daily  | daily_presence     | Activate presence-based control for your devices today                                     | Every weekday at 12am & Triggered by User Interaction |
+| daily  | daily_schedule     | Use schedule-based control for your devices today                                          | Every weekday at 12am & Triggered by User Interaction |
 | daily  | daily_remote       | Use remote control while you are away from your desk today                                 | Triggered by User Interaction |
 | daily  | lower_energy_con   | Clock a lower energy consumption than yesterday                                            | Every weekday at 11:50pm |
 | daily  | turn_off_leave     | Turn off your plug loads when you leave your desk for a long period of time during the day | Every 15 mins            |
