@@ -3,6 +3,8 @@ import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
 
+DEBUGGING = True  # Turn on for debugging mode
+
 
 CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
                          user='dadtkzpuzwfows',
@@ -44,12 +46,18 @@ def read_all_db(user_id=None):
 
 def update_db(df, table_name, index_to_col=False):
     """Sends the information over to SQL"""
-    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
-    print(df.head())
-    assert sorted(get_table_column(table_name)) == sorted(
-        list(df.columns)), "Table columns are not the same"
-    # input('Proceed?')
-    df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
+    if DEBUGGING:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [DEBUGGING] Table <{table_name}>')
+        print(df.head())
+        assert sorted(get_table_column(table_name)) == sorted(
+            list(df.columns)), "Table columns are not the same"
+    else:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
+        print(df.head())
+        assert sorted(get_table_column(table_name)) == sorted(
+            list(df.columns)), "Table columns are not the same"
+        # input('Proceed?')
+        df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
 def read_cost_savings(user_id=None):
