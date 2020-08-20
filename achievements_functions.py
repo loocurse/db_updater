@@ -197,11 +197,10 @@ def _cum_savings(user_id):
         output.index = df.index
         output.fillna(0, inplace=True)
         output['total'] = output.sum(axis=1)
-        print(output['total'])
         return output
 
     # Aggregate data based on view & set index
-    week_view = df.groupby(pd.Grouper(freq='W-MON')).sum()
+    week_view = df.groupby(pd.Grouper(freq='W-MON', label='left')).sum()
     week_view = process(week_view)
     if existing_value == 0:
         week_view = week_view[:-1]['total'].tolist()
@@ -278,7 +277,6 @@ def _update_bonus_table(achievements_to_update):
     df_bonus = database_read_write.get_bonus_table()
     user_ids = sorted(df_bonus['user_id'].unique())
     for user_id in user_ids:
-        print(f'USERID = {user_id}')
         ser_bonus = df_bonus.loc[df_bonus.user_id == user_id].iloc[0]
         for col, value in ser_bonus.iteritems():
             if col in achievements_to_update and col == "cum_savings":
