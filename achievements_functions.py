@@ -67,6 +67,27 @@ def _turn_off_end(user_id):
         return points['turn_off_end']
 
 
+def _daily_presence(user_id):
+    """DONE BY MIRABEL
+    Achievement: Activate presence-based control for your devices today"""
+    condition = False
+    return points['daily_presence'] if condition else 0
+
+
+def _daily_schedule(user_id):
+    """DONE BY MIRABEL
+    Achievement: Use schedule-based control for your devices today"""
+    condition = False
+    return points['daily_schedule'] if condition else 0
+
+
+def _daily_remote(user_id):
+    """DONE BY MIRABEL
+    Achievement: Use remote control while you are away from your desk today"""
+    condition = False
+    return points['daily_remote'] if condition else 0
+
+
 def _complete_all_daily(user_id):
     daily = database_read_write.get_daily_table()
     daily = daily.loc[daily.user_id == user_id]
@@ -220,6 +241,9 @@ FUNCTIONS = {
     'complete_all_daily': _complete_all_daily,
     'cost_saving': _cost_saving,
     'schedule_based': _schedule_based,
+    'daily_presence': daily_presence(),
+    'daily_schedule': lambda x: 0,
+    'daily_remote': lambda x: 0,
     'complete_daily': _complete_daily,
     'tree_first': _tree_first,
     'tree_fifth': _tree_fifth,
@@ -253,6 +277,7 @@ def _update_daily_table(achievements_to_update):
             if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
                 index = df_daily.index[(df_daily['user_id'] == user_id) & (
                         df_daily.index == today)]
+                print(index, col, FUNCTIONS[col](user_id))
                 df_daily.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
     df_daily.insert(1, 'week_day', df_daily.index)
@@ -341,3 +366,6 @@ def achievement_update_every_sunday_2350():
     ]
     _update_weekly_table(to_update)
     _initialise_achievements()
+
+    # Add energy points based on week's cost saving
+    database_read_write.read_cost_savings()
