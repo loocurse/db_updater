@@ -77,7 +77,9 @@ def _daily_presence(user_id):
 def _daily_schedule(user_id):
     """DONE BY MIRABEL
     Achievement: Use schedule-based control for your devices today"""
-    condition = False
+    schedules = database_read_write.get_schedules(user_id)
+    number_of_schedules = len(schedules)
+    condition = number_of_schedules > 0
     return points['daily_schedule'] if condition else 0
 
 
