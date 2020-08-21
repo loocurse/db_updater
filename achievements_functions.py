@@ -71,7 +71,7 @@ def _daily_presence(user_id):
     """DONE BY MIRABEL
     Achievement: Activate presence-based control for your devices today"""
     df = database_read_write.get_presence_states(user_id)
-    number_of_off = len(df.loc[df['presence_setting'] === 1000000])
+    number_of_off = len(df.loc[df['presence_setting'] == 1000000])
     condition = number_of_off != 0
     return points['daily_presence'] if condition else 0
 
@@ -92,10 +92,10 @@ def _daily_remote(user_id):
     return points['daily_remote'] if condition else 0
 
 
-def _complete_all_daily(user_id):
+def _complete_all_daily(user_id, achieved=False):
     daily = database_read_write.get_daily_table()
     daily = daily.loc[daily.user_id == user_id]
-    ser = daily.loc[database_read_write.get_today().strftime('%a')].to_list()
+    ser = daily.loc[database_read_write.get_today().strftime('%a')].to_list()[:-1]
     if all(ser):
         return points['complete_all_daily']
     else:
@@ -124,7 +124,7 @@ def _schedule_based(user_id):
 def _complete_daily(user_id):
     """Achievement: Complete all daily achievements for 4 days of the week"""
     # TODO turn off checking on sat
-    if database_read_write.get_today() not in ['Thu', 'Fri']:
+    if database_read_write.get_today() not in ['Fri']:
         return 0
     else:
         df = database_read_write.get_daily_table()
