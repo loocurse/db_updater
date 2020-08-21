@@ -29,10 +29,10 @@ def _initialise_variables(df):
         return dt.datetime.fromtimestamp(unix_time).strftime('%H')
 
     def generate_kWh(val):
-        return round(val / (1000 * 60), 3)
+        return round(val / (1000 * 60), 5)
 
     def generate_cost(kwh):
-        return round(kwh * singapore_tariff_rate, 4)
+        return round(kwh * singapore_tariff_rate, 5)
 
     df['month'] = df['unix_time'].apply(generate_month)
     df['year'] = df['unix_time'].apply(generate_year)
