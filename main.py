@@ -9,7 +9,6 @@ import json
 with open('credentials.json', 'r') as f:
     CONNECTION_PARAMS = json.load(f)
 
-
 if __name__ == '__main__':
     if DEBUGGING:
         print('WARNING: Debugging mode is turned on, database will not be updated')
@@ -19,12 +18,19 @@ if __name__ == '__main__':
     schedule.every().sunday.do(graph_weekly_monthly_update)
 
     # Update achievements
-    schedule.every().hour.at(':00').do(achievements_update_every_15m)
-    schedule.every().hour.at(':15').do(achievements_update_every_15m)
-    schedule.every().hour.at(':30').do(achievements_update_every_15m)
-    schedule.every().hour.at(':45').do(achievements_update_every_15m)
-    schedule.every().day.at("23:50").do(achievement_update_everyday_2350)
-    schedule.every().sunday.at("23:50").do(achievement_update_every_sunday_2350)
+    schedule.every().hour.at(':00').do(achievements_to_update, ['turn_off_leave'])
+    schedule.every().hour.at(':15').do(achievements_to_update, ['turn_off_leave'])
+    schedule.every().hour.at(':30').do(achievements_to_update, ['turn_off_leave'])
+    schedule.every().hour.at(':45').do(achievements_to_update, ['turn_off_leave'])
+    schedule.every().day.at("00:05").do(achievements_to_update, ['turn_off_leave'])
+    schedule.every().day.at("23:50").do(achievements_to_update,
+                                        ['lower_energy_con', 'turn_off_end', 'tree_first',
+                                         'tree_fifth', 'tree_tenth', ])
+    schedule.every().day.at("23:55").do(achievements_to_update, ['complete_all_daily'])
+    schedule.every().friday.at("23:55").do(achievements_to_update, ['complete_daily', 'complete_weekly'])
+    schedule.every().sunday.at("23:53").do(achievements_to_update, ['cost_saving', 'schedule_based'])
+    schedule.every().sunday.at("23:59").do(initialise_achievements)
+    schedule.every().sunday.at("23:59").do(add_cost_saving_to_energy_points)
 
     # Update control features
     schedule.every(5).seconds.do(check_remote_control)
