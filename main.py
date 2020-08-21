@@ -3,12 +3,12 @@ from achievements_functions import *
 from database_read_write import *
 from control_functions import *
 import schedule
+import json
 
-CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
-                         user='dadtkzpuzwfows',
-                         password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
-                         host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
-                         port='5432')
+# Read credentials
+with open('credentials.json', 'r') as f:
+    CONNECTION_PARAMS = json.load(f)
+
 
 if __name__ == '__main__':
     if DEBUGGING:

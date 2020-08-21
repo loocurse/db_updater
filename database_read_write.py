@@ -2,14 +2,13 @@ from sqlalchemy import create_engine
 import psycopg2
 import pandas as pd
 from datetime import datetime, timedelta
+import json
 
 DEBUGGING = False  # Turn on for debugging mode
 
-CONNECTION_PARAMS = dict(database='d53rn0nsdh7eok',
-                         user='dadtkzpuzwfows',
-                         password='1a62e7d11e87864c20e4635015040a6cb0537b1f863abcebe91c50ef78ee4410',
-                         host='ec2-46-137-79-235.eu-west-1.compute.amazonaws.com',
-                         port='5432')
+# Read credentials
+with open('credentials.json', 'r') as f:
+    CONNECTION_PARAMS = json.load(f)
 
 engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(CONNECTION_PARAMS['user'],
                                                             CONNECTION_PARAMS['password'],
