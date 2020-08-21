@@ -86,7 +86,7 @@ def _weekFunction(df):
     # idx = df.index[df['BoolCol']] # Search for indexes of value in column
     # df.loc[idx] # Get rows with all the columns
     df_week_random.loc[(df_week_random['date'] > start) & (
-            df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
+        df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
     df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(7))) &
                        (df_week_random['date'] <= (end - dt.timedelta(7))), ['week']] = "{}".format(
         (start - dt.timedelta(7)).strftime('%d %b'))
@@ -176,7 +176,6 @@ def _hourFunction(df):
     df_hour = df_hour.loc[mask]
     df_hour.reset_index(drop=True, inplace=True)
     # print(df_hour)
-
     # Create new instance of df for Piechart
     df_hour_pie = copy.deepcopy(df_hour)
 
@@ -191,7 +190,7 @@ def _hourFunction(df):
     df_hour.reset_index(drop=True, inplace=True)
     # Optional Convert to %d/%m/%Y
     df_hour['date'] = df_hour['date'].dt.strftime('%d/%m/%Y')
-
+    print(df_hour)
     # Pie Chart
 
     # Aggregate data
@@ -284,7 +283,7 @@ def _monthFunction(df):
         end, '%d/%m/%Y').replace(day=1)
 
     start = end_first_day_date - \
-            dateutil.relativedelta.relativedelta(months=5)
+        dateutil.relativedelta.relativedelta(months=5)
 
     mask = (df_month['date'] > start) & (df_month['date'] <= end)
 
