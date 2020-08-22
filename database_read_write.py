@@ -792,37 +792,37 @@ def custom_query(query):
     return df
 
 
-# # IGNORE, FOR TESTING ONLY
-x = 2
-if x == 1:
-    to_update = [
-        'lower_energy_con',
-        'turn_off_end',
-        'complete_all_daily',
-        'tree_first',
-        'tree_fifth',
-        'tree_tenth',
-        'redeem_reward',
-        'first_remote',
-        'first_schedule',
-        'cum_savings'
-    ]
+# # # IGNORE, FOR TESTING ONLY
+# x = 2
+# if x == 1:
+#     to_update = [
+#         'lower_energy_con',
+#         'turn_off_end',
+#         'complete_all_daily',
+#         'tree_first',
+#         'tree_fifth',
+#         'tree_tenth',
+#         'redeem_reward',
+#         'first_remote',
+#         'first_schedule',
+#         'cum_savings'
+#     ]
 
-    notifications_update('daily', to_update)
-    # notifications_update('bonus', to_update)
+#     notifications_update('daily', to_update)
+#     # notifications_update('bonus', to_update)
 
-elif x == 2:
-    to_update = [
-        'turn_off_leave'
-    ]
-    notifications_update('daily', to_update)
+# elif x == 2:
+#     to_update = [
+#         'turn_off_leave'
+#     ]
+#     notifications_update('daily', to_update)
 
-elif x == 3:
-    to_update = [
-        'cost_saving',
-        'schedule_based',
-        'complete_weekly',
-        'cum_savings',
-    ]
+# elif x == 3:
+#     to_update = [
+#         'cost_saving',
+#         'schedule_based',
+#         'complete_weekly',
+#         'cum_savings',
+#     ]
 
-    notifications_update('weekly', to_update)
+#     notifications_update('weekly', to_update)
