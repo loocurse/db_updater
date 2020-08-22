@@ -307,6 +307,9 @@ def notifications_update(achievement_type, achievements_list_to_update):
         today = get_today().strftime('%a')
         for user_id in user_ids:
             print('User ==> ', user_id)
+
+            # FUNCTION TO GET UPDATED DF _check_update_notifications()
+
             listofReturns = _check_update_notifications(unix_time_now,
                                                         df_achievements_info[df_achievements_info['user_id'] == user_id].reset_index(
                                                             drop=True),
