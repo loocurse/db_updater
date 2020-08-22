@@ -209,7 +209,6 @@ def load_notif_and_logs(achievement_type, connection):
 
     # Notifications stored on database
     sql_notif_df = pd.DataFrame(results, columns=colnames)
-    print("User 2 notifications", sql_notif_df['notifications'][1])
 
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM user_log")
@@ -282,15 +281,13 @@ def notifications_update(achievement_type, achievements_list_to_update):
         # overwrite the dict column with json-strings
         notificationsDataFrame['notifications'] = notificationsDataFrame.notifications.map(
             dict2json)
-        # notificationsDataFrame.to_csv("test_day_notif.csv")
-
-        # userlog_DataFrame.to_csv("test_user_log_day.csv")
 
         connection.close()
         update_db(notificationsDataFrame,
                   'notifications', index_to_col=False)
+
         update_db(userlog_DataFrame,
-                  'notifications', index_to_col=False)
+                  'user_log', index_to_col=False)
 
     elif achievement_type == 'weekly':
         # Initialise dataframes from the database, Achievement list and Notifications.
@@ -344,8 +341,9 @@ def notifications_update(achievement_type, achievements_list_to_update):
         connection.close()
         update_db(notificationsDataFrame,
                   'notifications', index_to_col=False)
+
         update_db(userlog_DataFrame,
-                  'notifications', index_to_col=False)
+                  'user_log', index_to_col=False)
 
     elif achievement_type == 'bonus':
         # Initialise dataframes from the database, Achievement list and Notifications.
@@ -396,8 +394,9 @@ def notifications_update(achievement_type, achievements_list_to_update):
         connection.close()
         update_db(notificationsDataFrame,
                   'notifications', index_to_col=False)
+
         update_db(userlog_DataFrame,
-                  'notifications', index_to_col=False)
+                  'user_log', index_to_col=False)
 
 
 def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df):
@@ -794,36 +793,36 @@ def custom_query(query):
 
 
 # # IGNORE, FOR TESTING ONLY
-# x = 2
-# if x == 1:
-#     to_update = [
-#         'lower_energy_con',
-#         'turn_off_end',
-#         'complete_all_daily',
-#         'tree_first',
-#         'tree_fifth',
-#         'tree_tenth',
-#         'redeem_reward',
-#         'first_remote',
-#         'first_schedule',
-#         'cum_savings'
-#     ]
+x = 2
+if x == 1:
+    to_update = [
+        'lower_energy_con',
+        'turn_off_end',
+        'complete_all_daily',
+        'tree_first',
+        'tree_fifth',
+        'tree_tenth',
+        'redeem_reward',
+        'first_remote',
+        'first_schedule',
+        'cum_savings'
+    ]
 
-#     notifications_update('daily', to_update)
-#     # notifications_update('bonus', to_update)
+    notifications_update('daily', to_update)
+    # notifications_update('bonus', to_update)
 
-# elif x == 2:
-#     to_update = [
-#         'turn_off_leave'
-#     ]
-#     notifications_update('daily', to_update)
+elif x == 2:
+    to_update = [
+        'turn_off_leave'
+    ]
+    notifications_update('daily', to_update)
 
-# elif x == 3:
-#     to_update = [
-#         'cost_saving',
-#         'schedule_based',
-#         'complete_weekly',
-#         'cum_savings',
-#     ]
+elif x == 3:
+    to_update = [
+        'cost_saving',
+        'schedule_based',
+        'complete_weekly',
+        'cum_savings',
+    ]
 
-#     notifications_update('weekly', to_update)
+    notifications_update('weekly', to_update)
