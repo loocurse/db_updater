@@ -230,7 +230,7 @@ def notifications_update(achievement_type, achievements_list_to_update):
     connection = psycopg2.connect(**CONNECTION_PARAMS)
 
     # Initialise data from csv
-    all_notif_df = pd.read_csv('.\\tables_csv\\notifications.csv')
+    all_notif_df = pd.read_csv('tables_csv/notifications.csv')
     # END OF INSERT SQL
 
     # Assign variables essential

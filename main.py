@@ -23,10 +23,19 @@ if __name__ == '__main__':
     schedule.every().hour.at(':30').do(achievements_to_update, ['turn_off_leave'])
     schedule.every().hour.at(':45').do(achievements_to_update, ['turn_off_leave'])
     schedule.every().day.at("00:05").do(achievements_to_update, ['turn_off_leave'])
-    schedule.every().day.at("23:50").do(achievements_to_update,
-                                        ['lower_energy_con', 'turn_off_end', 'tree_first',
-                                         'tree_fifth', 'tree_tenth', ])
-    schedule.every().day.at("23:55").do(achievements_to_update, ['complete_all_daily'])
+
+    for time in ['23:50', '23:55']:
+        if time == '23:50':
+            checklist = ['lower_energy_con', 'turn_off_end', 'tree_first', 'tree_fifth', 'tree_tenth', ]
+        else:
+            checklist = ['complete_all_daily']
+
+        schedule.every().monday.at(time).do(achievements_to_update, checklist)
+        schedule.every().tuesday.at(time).do(achievements_to_update, checklist)
+        schedule.every().wednesday.at(time).do(achievements_to_update, checklist)
+        schedule.every().thursday.at(time).do(achievements_to_update, checklist)
+        schedule.every().friday.at(time).do(achievements_to_update, checklist)
+
     schedule.every().friday.at("23:55").do(achievements_to_update, ['complete_daily', 'complete_weekly'])
     schedule.every().sunday.at("23:53").do(achievements_to_update, ['cost_saving', 'schedule_based'])
     schedule.every().sunday.at("23:59").do(initialise_achievements)
