@@ -60,7 +60,7 @@ def update_db(df, table_name, index_to_col=False):
         print(df.head())
         assert sorted(get_table_column(table_name)) == sorted(
             list(df.columns)), "Table columns are not the same"
-        input('Proceed?')
+        # input('Proceed?')
         df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
