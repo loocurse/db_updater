@@ -209,6 +209,7 @@ def load_notif_and_logs(achievement_type, connection):
 
     # Notifications stored on database
     sql_notif_df = pd.DataFrame(results, columns=colnames)
+    print("User 2 notifications", sql_notif_df['notifications'][1])
 
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM user_log")
@@ -243,6 +244,12 @@ def notifications_update(achievement_type, achievements_list_to_update):
         user_log_df = notif_and_logs_list[1]
         user_ids = notif_and_logs_list[2]
         df_achievements_info = notif_and_logs_list[3]
+
+        def converttoDictfromJsonString(jsonStr):
+            return json.loads(jsonStr)
+
+        sql_notif_df['notifications'] = sql_notif_df['notifications'].apply(
+            converttoDictfromJsonString)
 
         userlog_DataFrame = pd.DataFrame(
             columns=['id', 'user_id', 'type', 'unix_time', 'description'])
@@ -282,8 +289,8 @@ def notifications_update(achievement_type, achievements_list_to_update):
         connection.close()
         update_db(notificationsDataFrame,
                   'notifications', index_to_col=False)
-        update_db(userlog_DataFrame,
-                  'notifications', index_to_col=False)
+        # update_db(userlog_DataFrame,
+        #           'notifications', index_to_col=False)
 
     elif achievement_type == 'weekly':
         # Initialise dataframes from the database, Achievement list and Notifications.
@@ -293,7 +300,8 @@ def notifications_update(achievement_type, achievements_list_to_update):
         user_log_df = notif_and_logs_list[1]
         user_ids = notif_and_logs_list[2]
         df_achievements_info = notif_and_logs_list[3]
-
+        sql_notif_df['notifications'][0] = json.loads(
+            sql_notif_df['notifications'][0])
         userlog_DataFrame = pd.DataFrame(
             columns=['id', 'user_id', 'type', 'unix_time', 'description'])
 
@@ -347,6 +355,8 @@ def notifications_update(achievement_type, achievements_list_to_update):
         user_log_df = notif_and_logs_list[1]
         user_ids = notif_and_logs_list[2]
         df_achievements_info = notif_and_logs_list[3]
+        sql_notif_df['notifications'][0] = json.loads(
+            sql_notif_df['notifications'][0])
 
         userlog_DataFrame = pd.DataFrame(
             columns=['id', 'user_id', 'type', 'unix_time', 'description'])
@@ -418,7 +428,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
             # achievements_list_to_update
 
             # Every Day
-            if col in ['turn_off_end', 'complete_all_daily']:  # End of day mark
+            if col in achievements_list_to_update:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
@@ -469,7 +479,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                     print("Something wrong with your condition")
 
             # At 12am
-            elif col in ['daily_presence', 'daily_schedule']:  # 12 AM mark
+            elif col in achievements_list_to_update:  # 12 AM mark
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
@@ -517,7 +527,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 else:
                     print("Something wrong with your condition")
             # Every 15 min
-            elif col in ['turn_off_leave']:  # 15 min mark
+            elif col in achievements_list_to_update:  # 15 min mark
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
@@ -588,7 +598,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
             # achievements_list_to_update
 
             # Every Sunday
-            if col in ["cost_saving", "schedule_based"]:  # End of day mark
+            if col in achievements_list_to_update:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
@@ -604,6 +614,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                     NewDict.update({'message': _messageText})
                     NewDict.update({'type': _messageType})
                     NewDict.update({'seen': 0})
+
                     sql_notif_df['notifications'][0]['notifications'].append(
                         copy.deepcopy(NewDict))
                     # Append new dict to table.notifications col (list) on database.
@@ -637,7 +648,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                     print("Something wrong with your condition")
 
             # Every Friday
-            elif col in ['complete_daily', 'complete_weekly']:
+            elif col in achievements_list_to_update:
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
@@ -709,7 +720,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
             # achievements_list_to_update
 
             # Every Day
-            if col in ["cost_saving", "schedule_based"]:  # End of day mark
+            if col in achievements_list_to_update:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
@@ -757,6 +768,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                     # Append new dict to table.notifications col (list) on database.
                 else:
                     print("Something wrong with your condition")
+
     return [sql_notif_df, user_log_df]
 
 
@@ -782,7 +794,7 @@ def custom_query(query):
 
 
 # # IGNORE, FOR TESTING ONLY
-# x = 1
+# x = 2
 # if x == 1:
 #     to_update = [
 #         'lower_energy_con',
