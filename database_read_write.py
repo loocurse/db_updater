@@ -289,8 +289,8 @@ def notifications_update(achievement_type, achievements_list_to_update):
         connection.close()
         update_db(notificationsDataFrame,
                   'notifications', index_to_col=False)
-        # update_db(userlog_DataFrame,
-        #           'notifications', index_to_col=False)
+        update_db(userlog_DataFrame,
+                  'notifications', index_to_col=False)
 
     elif achievement_type == 'weekly':
         # Initialise dataframes from the database, Achievement list and Notifications.
