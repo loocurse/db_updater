@@ -95,7 +95,8 @@ def _daily_remote(user_id):
 def _complete_all_daily(user_id, achieved=False):
     daily = database_read_write.get_daily_table()
     daily = daily.loc[daily.user_id == user_id]
-    ser = daily.loc[database_read_write.get_today().strftime('%a')].to_list()[:-1]
+    ser = daily.loc[database_read_write.get_today().strftime('%a')].to_list()[
+        :-1]
     if all(ser):
         return points['complete_all_daily']
     else:
@@ -292,10 +293,12 @@ def _update_daily_table(achievements_to_update):
         ser_daily = df_daily.loc[df_daily.user_id == user_id].loc[today]
         for col, value in ser_daily.iteritems():
             if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
+
                 index = df_daily.index[(df_daily['user_id'] == user_id) & (
-                        df_daily.index == today)].tolist()[0]
+                    df_daily.index == today)].tolist()[0]
                 df_daily.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+
     df_daily.insert(1, 'week_day', df_daily.index)
     database_read_write.update_db(df_daily, 'achievements_daily')
 
@@ -355,9 +358,12 @@ def initialise_achievements():
 
 def achievements_to_update(achievements):
     """Update the achievements given as an input and updates the corresponding table in the database"""
-    update_daily_table = any([achievement in DAILY_ACHIEVEMENTS for achievement in achievements])
-    update_weekly_table = any([achievement in WEEKLY_ACHIEVEMENTS for achievement in achievements])
-    update_bonus_table = any([achievement in BONUS_ACHIEVEMENTS for achievement in achievements])
+    update_daily_table = any(
+        [achievement in DAILY_ACHIEVEMENTS for achievement in achievements])
+    update_weekly_table = any(
+        [achievement in WEEKLY_ACHIEVEMENTS for achievement in achievements])
+    update_bonus_table = any(
+        [achievement in BONUS_ACHIEVEMENTS for achievement in achievements])
 
     if update_daily_table:
         _update_daily_table(achievements)
@@ -369,7 +375,7 @@ def achievements_to_update(achievements):
         _update_bonus_table(achievements)
         database_read_write.notifications_update('bonus', achievements)
 
-#
+
 # def achievement_update_everyday_2350():
 #     to_update = [
 #         'lower_energy_con',

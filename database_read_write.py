@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 import psycopg2
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import time
 import copy
@@ -60,7 +60,7 @@ def update_db(df, table_name, index_to_col=False):
         print(df.head())
         assert sorted(get_table_column(table_name)) == sorted(
             list(df.columns)), "Table columns are not the same"
-        # input('Proceed?')
+        input('Proceed?')
         df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
@@ -203,6 +203,8 @@ def load_notif_and_logs(achievement_type, connection):
     """Reads the SQL database for the entire output and outputs the dataframe with cols stated below"""
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM notifications")
+        # cursor.execute("SELECT * FROM notifications_test")
+
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
     """Reads the SQL database for the entire output and outputs the dataframe with cols stated below"""
@@ -212,6 +214,8 @@ def load_notif_and_logs(achievement_type, connection):
 
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM user_log")
+        # cursor.execute("SELECT * FROM user_log_test")
+
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
     # Notifications stored on database
@@ -225,7 +229,6 @@ def load_notif_and_logs(achievement_type, connection):
 def notifications_update(achievement_type, achievements_list_to_update):
     print(
         f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Getting the {achievement_type} achievements status')
-    start_time = datetime.now()
     # Connect to PostgreSQL database
     connection = psycopg2.connect(**CONNECTION_PARAMS)
 
@@ -234,173 +237,175 @@ def notifications_update(achievement_type, achievements_list_to_update):
     # END OF INSERT SQL
 
     # Assign variables essential
+    notif_and_logs_list = load_notif_and_logs(achievement_type, connection)
+    sql_notif_df = notif_and_logs_list[0]
+    user_log_df = notif_and_logs_list[1]
+    user_ids = notif_and_logs_list[2]
+    df_achievements_info = notif_and_logs_list[3]
+    # Initialise dataframes from the database, Achievement list and Notifications.
 
+    def converttoDictfromJsonString(jsonStr):
+        return json.loads(jsonStr)
+
+    sql_notif_df['notifications'] = sql_notif_df['notifications'].apply(
+        converttoDictfromJsonString)
+
+    userlog_DataFrame = pd.DataFrame(
+        columns=['id', 'user_id', 'type', 'unix_time', 'description'])
+
+    # Initialise Variables
+    notificationsDataFrame = pd.DataFrame(
+        columns=['id', 'user_id', 'notifications', 'seen'])
+    listofDF = []
+
+    unix_time_now = int(time.time())
+
+    for user_id in user_ids:
+        print('User ==> ', user_id)
+
+        '''Functions to append new notifications and logs'''
+        listofReturns = _check_update_notifications(unix_time_now,
+                                                    df_achievements_info[df_achievements_info['user_id'] == user_id].reset_index(
+                                                        drop=True),
+                                                    user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df)
+        listofDF.append(listofReturns[0])  # for notifications
+    notificationsDataFrame = pd.concat(listofDF)
+    userlog_DataFrame = listofReturns[1]  # for logs
+    userlog_DataFrame.reset_index(drop=True, inplace=True)
+
+    notificationsDataFrame.reset_index(drop=True, inplace=True)
+
+    # Test output before updating DB
+    # conversion function:
+
+    def dict2json(dictionary):
+        return json.dumps(dictionary, ensure_ascii=False)
+    # overwrite the dict column with json-strings
+    notificationsDataFrame['notifications'] = notificationsDataFrame.notifications.map(
+        dict2json)
+
+    connection.close()
+
+    '''Update databases'''
     if achievement_type == 'daily':
-        # Initialise dataframes from the database, Achievement list and Notifications.
 
-        notif_and_logs_list = load_notif_and_logs(achievement_type, connection)
-        sql_notif_df = notif_and_logs_list[0]
-        user_log_df = notif_and_logs_list[1]
-        user_ids = notif_and_logs_list[2]
-        df_achievements_info = notif_and_logs_list[3]
+        # notificationsDataFrame.to_csv('notifDaily.csv')
+        # userlog_DataFrame.to_csv('userDailyLog.csv')
 
-        def converttoDictfromJsonString(jsonStr):
-            return json.loads(jsonStr)
-
-        sql_notif_df['notifications'] = sql_notif_df['notifications'].apply(
-            converttoDictfromJsonString)
-
-        userlog_DataFrame = pd.DataFrame(
-            columns=['id', 'user_id', 'type', 'unix_time', 'description'])
-
-        # Initialise Variables
-        notificationsDataFrame = pd.DataFrame(
-            columns=['id', 'user_id', 'notifications', 'seen'])
-        listofDF = []
-
-        unix_time_now = int(time.time())
-
-        for user_id in user_ids:
-            print('User ==> ', user_id)
-            listofReturns = _check_update_notifications(unix_time_now,
-                                                        df_achievements_info[df_achievements_info['user_id'] == user_id].reset_index(
-                                                            drop=True),
-                                                        user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df)
-            listofDF.append(listofReturns[0])  # for notifications
-        notificationsDataFrame = pd.concat(listofDF)
-        userlog_DataFrame = listofReturns[1]  # for logs
-        userlog_DataFrame.reset_index(drop=True, inplace=True)
-
-        notificationsDataFrame.reset_index(drop=True, inplace=True)
-
-        # Test output before updating DB
-        # conversion function:
-
-        def dict2json(dictionary):
-            return json.dumps(dictionary, ensure_ascii=False)
-        # overwrite the dict column with json-strings
-        notificationsDataFrame['notifications'] = notificationsDataFrame.notifications.map(
-            dict2json)
-
-        connection.close()
         update_db(notificationsDataFrame,
                   'notifications', index_to_col=False)
 
         update_db(userlog_DataFrame,
                   'user_log', index_to_col=False)
+
+        # update_db(notificationsDataFrame,
+        #           'notifications_test', index_to_col=False)
+
+        # update_db(userlog_DataFrame,
+        #           'user_log_test', index_to_col=False)
 
     elif achievement_type == 'weekly':
-        # Initialise dataframes from the database, Achievement list and Notifications.
 
-        notif_and_logs_list = load_notif_and_logs(achievement_type, connection)
-        sql_notif_df = notif_and_logs_list[0]
-        user_log_df = notif_and_logs_list[1]
-        user_ids = notif_and_logs_list[2]
-        df_achievements_info = notif_and_logs_list[3]
-        sql_notif_df['notifications'][0] = json.loads(
-            sql_notif_df['notifications'][0])
-        userlog_DataFrame = pd.DataFrame(
-            columns=['id', 'user_id', 'type', 'unix_time', 'description'])
+        # notificationsDataFrame.to_csv('notifWeekly.csv')
+        # userlog_DataFrame.to_csv('userWeeklyLog.csv')
 
-        notificationsDataFrame = pd.DataFrame(
-            columns=['id', 'user_id', 'notifications', 'seen'])
-
-        listofDF = []
-
-        unix_time_now = int(time.time())
-
-        today = get_today().strftime('%a')
-        for user_id in user_ids:
-            print('User ==> ', user_id)
-
-            # FUNCTION TO GET UPDATED DF _check_update_notifications()
-
-            listofReturns = _check_update_notifications(unix_time_now,
-                                                        df_achievements_info[df_achievements_info['user_id'] == user_id].reset_index(
-                                                            drop=True),
-                                                        user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df)
-            listofDF.append(listofReturns[0])  # for notifications
-        notificationsDataFrame = pd.concat(listofDF)
-        userlog_DataFrame = listofReturns[1]  # for logs
-        userlog_DataFrame.reset_index(drop=True, inplace=True)
-
-        notificationsDataFrame.reset_index(drop=True, inplace=True)
-
-        # Test output before updating DB
-        # conversion function:
-
-        def dict2json(dictionary):
-            return json.dumps(dictionary, ensure_ascii=False)
-        # overwrite the dict column with json-strings
-        notificationsDataFrame['notifications'] = notificationsDataFrame.notifications.map(
-            dict2json)
-        # notificationsDataFrame.to_csv("test_week_notif.csv")
-
-        # userlog_DataFrame.to_csv("test_user_log_week.csv")
-
-        connection.close()
         update_db(notificationsDataFrame,
                   'notifications', index_to_col=False)
 
         update_db(userlog_DataFrame,
                   'user_log', index_to_col=False)
+
+        # update_db(notificationsDataFrame,
+        #           'notifications_test', index_to_col=False)
+
+        # update_db(userlog_DataFrame,
+        #           'user_log_test', index_to_col=False)
 
     elif achievement_type == 'bonus':
-        # Initialise dataframes from the database, Achievement list and Notifications.
 
-        notif_and_logs_list = load_notif_and_logs(achievement_type, connection)
-        sql_notif_df = notif_and_logs_list[0]
-        user_log_df = notif_and_logs_list[1]
-        user_ids = notif_and_logs_list[2]
-        df_achievements_info = notif_and_logs_list[3]
-        sql_notif_df['notifications'][0] = json.loads(
-            sql_notif_df['notifications'][0])
+        # notificationsDataFrame.to_csv('notifBonus.csv')
+        # userlog_DataFrame.to_csv('userBonusLog.csv')
 
-        userlog_DataFrame = pd.DataFrame(
-            columns=['id', 'user_id', 'type', 'unix_time', 'description'])
-
-        notificationsDataFrame = pd.DataFrame(
-            columns=['id', 'user_id', 'notifications', 'seen'])
-        listofDF = []
-
-        unix_time_now = int(time.time())
-        today = get_today().strftime('%a')
-
-        for user_id in user_ids:
-            print('User ==> ', user_id)
-            listofReturns = _check_update_notifications(unix_time_now,
-                                                        df_achievements_info[df_achievements_info['user_id'] == user_id].reset_index(
-                                                            drop=True),
-                                                        user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df)
-            listofDF.append(listofReturns[0])  # for notifications
-        notificationsDataFrame = pd.concat(listofDF)
-        userlog_DataFrame = listofReturns[1]  # for logs
-        userlog_DataFrame.reset_index(drop=True, inplace=True)
-
-        notificationsDataFrame.reset_index(drop=True, inplace=True)
-
-        # Test output before updating DB
-        # conversion function:
-
-        def dict2json(dictionary):
-            return json.dumps(dictionary, ensure_ascii=False)
-        # overwrite the dict column with json-strings
-        notificationsDataFrame['notifications'] = notificationsDataFrame.notifications.map(
-            dict2json)
-        # notificationsDataFrame.to_csv("test_bonus_notif.csv")
-
-        # userlog_DataFrame.to_csv("test_user_log_bonus.csv")
-
-        connection.close()
         update_db(notificationsDataFrame,
                   'notifications', index_to_col=False)
 
         update_db(userlog_DataFrame,
                   'user_log', index_to_col=False)
+
+        # update_db(notificationsDataFrame,
+        #           'notifications_test', index_to_col=False)
+
+        # update_db(userlog_DataFrame,
+        #           'user_log_test', index_to_col=False)
 
 
 def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df):
     # achievement_titles 1 2 and 3 hard coded.
+    def successFunction(NewDict, all_notif_df, col, sql_notif_df):
+        _messageType = "success"
+
+        _messageText = all_notif_df.loc[all_notif_df['achievement']
+                                        == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
+
+        now = datetime.now(timezone.utc)
+        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight = midnight.timestamp()
+        # Check if SUCCESS notification has been already sent:
+
+        # For logs
+        # cols = 'id','user_id','type','unix_time', 'description'
+        log_description = all_notif_df.loc[all_notif_df['achievement']
+                                           == col]['description'].reset_index(drop=True)[0].replace('\t', '')
+
+        # Check if turn off after leave for long periods already achieved:
+        user_log_filtered = copy.deepcopy(
+            user_log_df.loc[(user_log_df['user_id'] == user_id) & (user_log_df['unix_time'] > midnight)])
+
+        if log_description not in user_log_filtered['description'].to_list():
+            newList = [0, user_id, 'achievement',
+                       unix_time_now, log_description]
+            user_log_df_len = len(user_log_df)
+            user_log_df.loc[user_log_df_len] = newList
+
+            print("SUCCESS", _messageText)
+            # _messageText = _allNotifDict[_achievementType][_messageType]
+            NewDict.update({'timestamp': datetime_now})
+            NewDict.update({'message': _messageText})
+            NewDict.update({'type': _messageType})
+            NewDict.update({'seen': 0})
+
+            sql_notif_df['notifications'][0]['notifications'].append(
+                copy.deepcopy(NewDict))
+
+        else:
+
+            print("UPDATE FOUND ALREADY:", _messageText)
+            print(
+                "NO NEED TO UPDATE NOTIFICATIONS")
+            print(
+                "NO NEED TO UPDATE USER LOG")
+
+    def failureFunction(NewDict, all_notif_df, col, sql_notif_df):
+        _messageType = "failure"
+        # _messageText = _allNotifDict[_achievementType][_messageType]
+
+        _messageText = all_notif_df.loc[all_notif_df['achievement']
+                                        == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
+        print("FAILURE", _messageText)
+        print("Notification of Failure Sent!")
+
+        NewDict.update({'timestamp': datetime_now})
+        NewDict.update({'message': _messageText})
+        NewDict.update({'type': "warning"})
+        NewDict.update({'seen': 0})
+
+        sql_notif_df['notifications'][0]['notifications'].append(
+            copy.deepcopy(NewDict))
+        # Append new dict to table.notifications col (list) on database.
+
+    def nanFunction(col):
+        print("Something wrong with your condition, might have NaN values for Column {}".format(col))
+
     '''DAILY'''
     if achievement_type == 'daily':
 
@@ -423,156 +428,44 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
         sql_notif_df.reset_index(drop=True, inplace=True)
 
         for col in df.columns:
-            # Replace _allNotifDict to csv table.
-            # achievements_list_to_update
+            print("Checking ", col)
 
-            # Every Day
-            if col in achievements_list_to_update:  # End of day mark
+            # Every Day 11:50pm
+            if any(item in ['lower_energy_con', 'turn_off_end', 'complete_all_daily'] for item in achievements_list_to_update) and col in ['lower_energy_con', 'turn_off_end', 'complete_all_daily']:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    _messageType = "success"
+                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
 
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-
-                    print("SUCCESS", _messageText)
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': _messageType})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
-
-                    # For logs
-                    # cols = 'id','user_id','type','unix_time', 'description'
-                    log_description = all_notif_df.loc[all_notif_df['achievement']
-                                                       == col]['description'].reset_index(drop=True)[0].replace('\t', '')
-                    newList = [0, user_id, 'achievement',
-                               unix_time_now, log_description]
-                    user_log_df_len = len(user_log_df)
-                    user_log_df.loc[user_log_df_len] = newList
-
-                if df[col][0] == 0:
-                    _messageType = "failure"
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-                    print("FAILURE", _messageText)
-
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': "warning"})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
-
+                elif df[col][0] == 0:
+                    failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
-                    print("Something wrong with your condition")
+                    nanFunction(col)
 
-            # At 12am
-            elif col in achievements_list_to_update:  # 12 AM mark
+            # At 12:05am
+            if any(item in ['daily_presence', 'daily_schedule'] for item in achievements_list_to_update) and col in ['daily_presence', 'daily_schedule']:  # 12 AM mark
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    _messageType = "success"
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-
-                    print("SUCCESS", _messageText)
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': _messageType})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
-
-                    # For logs
-                    # cols = 'id','user_id','type','unix_time', 'description'
-                    log_description = all_notif_df.loc[all_notif_df['achievement']
-                                                       == col]['description'].reset_index(drop=True)[0].replace('\t', '')
-                    newList = [0, user_id, 'achievement',
-                               unix_time_now, log_description]
-                    user_log_df_len = len(user_log_df)
-                    user_log_df.loc[user_log_df_len] = newList
-
-                if df[col][0] == 0:
-                    _messageType = "failure"
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-                    print("FAILURE", _messageText)
-
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': "warning"})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
+                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+                elif df[col][0] == 0:
+                    failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
-                    print("Something wrong with your condition")
+                    nanFunction(col)
+
             # Every 15 min
-            elif col in achievements_list_to_update:  # 15 min mark
+            if any(item in ['turn_off_leave'] for item in achievements_list_to_update) and col in ['turn_off_leave']:
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    _messageType = "success"
+                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
 
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
+                elif df[col][0] == 0:
+                    failureFunction(NewDict, all_notif_df, col, sql_notif_df)
 
-                    print("SUCCESS", _messageText)
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': _messageType})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
-
-                    # For logs
-                    # cols = 'id','user_id','type','unix_time', 'description'
-                    log_description = all_notif_df.loc[all_notif_df['achievement']
-                                                       == col]['description'].reset_index(drop=True)[0].replace('\t', '')
-                    newList = [0, user_id, 'achievement',
-                               unix_time_now, log_description]
-                    user_log_df_len = len(user_log_df)
-                    user_log_df.loc[user_log_df_len] = newList
-
-                if df[col][0] == 0:
-                    _messageType = "failure"
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-                    print("FAILURE", _messageText)
-
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': "warning"})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
                 else:
-                    print("Something wrong with your condition")
+                    nanFunction(col)
 
     elif achievement_type == "weekly":
         NewDict = {}
@@ -593,109 +486,28 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
 
         for col in df.columns:
             print("Checking ", col)
-            # Replace _allNotifDict to csv table.
-            # achievements_list_to_update
 
             # Every Sunday
-            if col in achievements_list_to_update:  # End of day mark
+            if any(item in ['cost_saving', 'schedule_based'] for item in achievements_list_to_update) and col in ['cost_saving', 'schedule_based']:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    _messageType = "success"
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-
-                    print("SUCCESS", _messageText)
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': _messageType})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
-                    # For logs
-                    # cols = 'id','user_id','type','unix_time', 'description'
-                    log_description = all_notif_df.loc[all_notif_df['achievement']
-                                                       == col]['description'].reset_index(drop=True)[0].replace('\t', '')
-                    newList = [0, user_id, 'achievement',
-                               unix_time_now, log_description]
-                    user_log_df_len = len(user_log_df)
-                    user_log_df.loc[user_log_df_len] = newList
-
-                if df[col][0] == 0:
-                    _messageType = "failure"
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-                    print("FAILURE", _messageText)
-
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': "warning"})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-
-                    # Append new dict to table.notifications col (list) on database.
+                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+                elif df[col][0] == 0:
+                    failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
-                    print("Something wrong with your condition")
-
+                    nanFunction(col)
             # Every Friday
-            elif col in achievements_list_to_update:
+            if any(item in ['complete_daily', 'complete_weekly'] for item in achievements_list_to_update) and col in ['complete_daily', 'complete_weekly']:  # End of day mark
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    _messageType = "success"
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-
-                    print("SUCCESS", _messageText)
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': _messageType})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-
-                    # Append new dict to table.notifications col (list) on database.
-
-                    # For logs
-                    # cols = 'id','user_id','type','unix_time', 'description'
-                    log_description = all_notif_df.loc[all_notif_df['achievement']
-                                                       == col]['description'].reset_index(drop=True)[0].replace('\t', '')
-                    newList = [0, user_id, 'achievement',
-                               unix_time_now, log_description]
-                    user_log_df_len = len(user_log_df)
-                    user_log_df.loc[user_log_df_len] = newList
-
-                if df[col][0] == 0:
-                    _messageType = "failure"
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-                    print("FAILURE", _messageText)
-
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': "warning"})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-
-                    # Append new dict to table.notifications col (list) on database.
+                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+                elif df[col][0] == 0:
+                    failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
-                    print("Something wrong with your condition")
+                    nanFunction(col)
 
     elif achievement_type == 'bonus':
         NewDict = {}
@@ -712,62 +524,18 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
 
         sql_notif_df = sql_notif_df.loc[sql_notif_df['user_id'] == user_id]
         sql_notif_df.reset_index(drop=True, inplace=True)
-
         for col in df.columns:
-            # print("Checking ", col)
-            # Replace _allNotifDict to csv table.
-            # achievements_list_to_update
+            print("Checking ", col)
 
-            # Every Day
-            if col in achievements_list_to_update:  # End of day mark
-
+            if any(item in ['tree_first', 'tree_fifth', 'tree_tenth'] for item in achievements_list_to_update) and col in ['tree_first', 'tree_fifth', 'tree_tenth']:  # End of day mark
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    _messageType = "success"
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-
-                    print("SUCCESS", _messageText)
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': _messageType})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
-
-                    # For logs
-                    # cols = 'id','user_id','type','unix_time', 'description'
-                    log_description = all_notif_df.loc[all_notif_df['achievement']
-                                                       == col]['description'].reset_index(drop=True)[0].replace('\t', '')
-                    newList = [0, user_id, 'achievement',
-                               unix_time_now, log_description]
-                    user_log_df_len = len(user_log_df)
-                    user_log_df.loc[user_log_df_len] = newList
-
-                if df[col][0] == 0:
-                    _messageType = "failure"
-                    # _messageText = _allNotifDict[_achievementType][_messageType]
-
-                    _messageText = all_notif_df.loc[all_notif_df['achievement']
-                                                    == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-                    print("FAILURE", _messageText)
-
-                    NewDict.update({'timestamp': datetime_now})
-                    NewDict.update({'message': _messageText})
-                    NewDict.update({'type': "warning"})
-                    NewDict.update({'seen': 0})
-
-                    sql_notif_df['notifications'][0]['notifications'].append(
-                        copy.deepcopy(NewDict))
-                    # Append new dict to table.notifications col (list) on database.
+                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+                elif df[col][0] == 0:
+                    failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
-                    print("Something wrong with your condition")
-
+                    nanFunction(col)
     return [sql_notif_df, user_log_df]
 
 
@@ -805,11 +573,13 @@ def custom_query(query):
 #         'redeem_reward',
 #         'first_remote',
 #         'first_schedule',
-#         'cum_savings'
+#         'cum_savings',
+#         'daily_presence',
+#         'daily_schedule'
 #     ]
 
-#     notifications_update('daily', to_update)
-#     # notifications_update('bonus', to_update)
+#     # notifications_update('daily', to_update)
+#     notifications_update('bonus', to_update)
 
 # elif x == 2:
 #     to_update = [
@@ -822,6 +592,7 @@ def custom_query(query):
 #         'cost_saving',
 #         'schedule_based',
 #         'complete_weekly',
+#         'complete_daily',
 #         'cum_savings',
 #     ]
 
