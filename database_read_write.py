@@ -60,7 +60,7 @@ def update_db(df, table_name, index_to_col=False):
         # print(df.head())
         assert sorted(get_table_column(table_name)) == sorted(
             list(df.columns)), "Table columns are not the same"
-        input('Proceed?')
+        # input('Proceed?')
         df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
@@ -431,8 +431,21 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
         for col in df.columns:
             print("Checking ", col)
 
+            # Every Day 11:55pm**
+            if any(item in ['complete_all_daily'] for item in achievements_list_to_update) and col in ['complete_all_daily']:  # End of day mark
+
+                _achievementName = col  # name of the achievement
+                # _achievementType = 'daily'  # Changes depending on achivement type! Important
+                if df[col][0] > 0:
+                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+
+                elif df[col][0] == 0:
+                    failureFunction(NewDict, all_notif_df, col, sql_notif_df)
+                else:
+                    nanFunction(col)
+
             # Every Day 11:50pm
-            if any(item in ['lower_energy_con', 'turn_off_end', 'complete_all_daily'] for item in achievements_list_to_update) and col in ['lower_energy_con', 'turn_off_end', 'complete_all_daily']:  # End of day mark
+            if any(item in ['lower_energy_con', 'turn_off_end'] for item in achievements_list_to_update) and col in ['lower_energy_con', 'turn_off_end']:  # End of day mark
 
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
@@ -636,6 +649,24 @@ def check_notificationstest():
     print(notificationsDataFrame['notifications'][0])
 
 
+def check_achievementstable():
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+
+    cursor = connection.cursor()
+
+    with connection.cursor() as cursor:
+        # cursor.execute("SELECT * FROM user_log")
+        cursor.execute("SELECT * FROM achievements_bonus")
+
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    # Notifications stored on database
+
+    # Initialise user_logs
+    achievementsDataFrame = pd.DataFrame(results, columns=colnames)
+    print(achievementsDataFrame)
+
+
 def clear_userlogtest():
     df = pd.DataFrame(
         columns=['id', 'user_id', 'type', 'unix_time', 'description'])
@@ -643,7 +674,8 @@ def clear_userlogtest():
     update_db(df, 'user_log_test', index_to_col=False)
 
 
-if __name__ == "__main__":
-    # check_userlogtest()
-    # check_notificationstest()
-    # clear_userlogtest()
+# if __name__ == "__main__":
+#     check_userlogtest()
+#     check_notificationstest()
+#     check_achievementstable()
+#     # clear_userlogtest()

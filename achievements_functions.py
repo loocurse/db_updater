@@ -260,12 +260,11 @@ FUNCTIONS = {
     'first_schedule': _first_schedule,
     'first_presence': _first_presence,
     'cum_savings': _cum_savings,
-    'complete_weekly': _complete_weekly,
 }
 
 DAILY_ACHIEVEMENTS = list(FUNCTIONS.keys())[:7]
-WEEKLY_ACHIEVEMENTS = list(FUNCTIONS.keys())[7:10]
-BONUS_ACHIEVEMENTS = list(FUNCTIONS.keys())[10:]
+WEEKLY_ACHIEVEMENTS = list(FUNCTIONS.keys())[7:11]
+BONUS_ACHIEVEMENTS = list(FUNCTIONS.keys())[11:]
 
 
 def _add_energy_points_wallet(user_id, points):
@@ -362,6 +361,7 @@ def initialise_achievements():
 
 def achievements_to_update(achievements):
     """Update the achievements given as an input and updates the corresponding table in the database"""
+
     update_daily_table = any(
         [achievement in DAILY_ACHIEVEMENTS for achievement in achievements])
     update_weekly_table = any(
@@ -419,8 +419,3 @@ def achievements_to_update(achievements):
 #     _update_weekly_table(to_update)
 #     # initialise_achievements()
 #     # add_cost_saving_to_energy_points()
-
-
-# achievement_update_everyday_2350()
-# achievement_update_every_sunday_2350()
-# achievements_update_every_15m()
