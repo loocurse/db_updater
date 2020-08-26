@@ -96,7 +96,7 @@ def _complete_all_daily(user_id, achieved=False):
     daily = database_read_write.get_daily_table()
     daily = daily.loc[daily.user_id == user_id]
     ser = daily.loc[database_read_write.get_today().strftime('%a')].to_list()[
-        :-1]
+          :-1]
     if all(ser):
         return points['complete_all_daily']
     else:
@@ -144,9 +144,8 @@ def _complete_weekly(user_id):
 
 def _tree_first(user_id):
     """Achievement: Save your first tree"""
-    saved_kwh = database_read_write.get_cumulative_saving(user_id)
-    if saved_kwh == None:
-        return 0
+    saved_w = database_read_write.get_cumulative_saving(user_id)
+    saved_kwh = saved_w / (1000*60)
     saved_trees = round(saved_kwh * 0.201 * 0.5)
     condition = saved_trees > 1
     return points['tree_first'] if condition else 0
@@ -154,7 +153,8 @@ def _tree_first(user_id):
 
 def _tree_fifth(user_id):
     """Achievement: Save your fifth tree"""
-    saved_kwh = database_read_write.get_cumulative_saving(user_id)
+    saved_w = database_read_write.get_cumulative_saving(user_id)
+    saved_kwh = saved_w / (1000*60)
     if saved_kwh == None:
         return 0
     saved_trees = round(saved_kwh * 0.201 * 0.5)
@@ -164,7 +164,8 @@ def _tree_fifth(user_id):
 
 def _tree_tenth(user_id):
     """Achievement: Save your tenth tree"""
-    saved_kwh = database_read_write.get_cumulative_saving(user_id)
+    saved_w = database_read_write.get_cumulative_saving(user_id)
+    saved_kwh = saved_w / (1000*60)
     saved_trees = round(saved_kwh * 0.201 * 0.5)
     condition = saved_trees > 5
     return points['tree_tenth'] if condition else 0
@@ -294,9 +295,8 @@ def _update_daily_table(achievements_to_update):
         ser_daily = df_daily.loc[df_daily.user_id == user_id].loc[today]
         for col, value in ser_daily.iteritems():
             if col in achievements_to_update and value == 0 and FUNCTIONS[col](user_id) > 0:
-
                 index = df_daily.index[(df_daily['user_id'] == user_id) & (
-                    df_daily.index == today)].tolist()[0]
+                        df_daily.index == today)].tolist()[0]
                 df_daily.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
 
@@ -320,7 +320,6 @@ def _update_weekly_table(achievements_to_update):
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
     database_read_write.update_db(df_weekly, 'achievements_weekly')
     database_read_write.notifications_update('weekly', achievements_to_update)
-
 
 
 def _update_bonus_table(achievements_to_update):
@@ -382,7 +381,6 @@ def achievements_to_update(achievements):
     if update_bonus_table:
         _update_bonus_table(achievements)
         # database_read_write.notifications_update('bonus', achievements)
-
 
 # def achievement_update_everyday_2350():
 #     to_update = [
