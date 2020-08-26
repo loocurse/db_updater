@@ -301,6 +301,7 @@ def _update_daily_table(achievements_to_update):
 
     df_daily.insert(1, 'week_day', df_daily.index)
     database_read_write.update_db(df_daily, 'achievements_daily')
+    database_read_write.notifications_update('daily', achievements)
 
 
 def _update_weekly_table(achievements_to_update):
@@ -316,6 +317,7 @@ def _update_weekly_table(achievements_to_update):
                     0]
                 df_weekly.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+    database_read_write.notifications_update('weekly', achievements)
 
 
 def _update_bonus_table(achievements_to_update):
@@ -337,6 +339,7 @@ def _update_bonus_table(achievements_to_update):
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
 
     database_read_write.update_db(df_bonus, 'achievements_bonus')
+    database_read_write.notifications_update('bonus', achievements)
 
 
 def initialise_achievements():
@@ -367,13 +370,15 @@ def achievements_to_update(achievements):
 
     if update_daily_table:
         _update_daily_table(achievements)
-        database_read_write.notifications_update('daily', achievements)
+        # database_read_write.notifications_update('daily', achievements)
+
     if update_weekly_table:
         _update_weekly_table(achievements)
-        database_read_write.notifications_update('weekly', achievements)
+        # database_read_write.notifications_update('weekly', achievements)
+
     if update_bonus_table:
         _update_bonus_table(achievements)
-        database_read_write.notifications_update('bonus', achievements)
+        # database_read_write.notifications_update('bonus', achievements)
 
 
 # def achievement_update_everyday_2350():
