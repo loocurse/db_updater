@@ -313,6 +313,7 @@ def _update_weekly_table(achievements_to_update):
                     0]
                 df_weekly.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
+    database_read_write.update_db(df_weekly, 'achievements_weekly')
 
 
 def _update_bonus_table(achievements_to_update):
