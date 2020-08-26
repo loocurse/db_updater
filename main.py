@@ -5,6 +5,8 @@ from control_functions import *
 import schedule
 import json
 
+DEBUGGING = False  # Turn on for debugging mode
+
 # Read credentials
 with open('credentials.json', 'r') as f:
     CONNECTION_PARAMS = json.load(f)
@@ -18,15 +20,21 @@ if __name__ == '__main__':
     schedule.every().sunday.do(graph_weekly_monthly_update)
 
     # Update achievements
-    schedule.every().hour.at(':00').do(achievements_to_update, ['turn_off_leave'])
-    schedule.every().hour.at(':15').do(achievements_to_update, ['turn_off_leave'])
-    schedule.every().hour.at(':30').do(achievements_to_update, ['turn_off_leave'])
-    schedule.every().hour.at(':45').do(achievements_to_update, ['turn_off_leave'])
-    schedule.every().day.at("00:05").do(achievements_to_update, ['turn_off_leave'])
+    schedule.every().hour.at(':00').do(
+        achievements_to_update, ['turn_off_leave'])
+    schedule.every().hour.at(':15').do(
+        achievements_to_update, ['turn_off_leave'])
+    schedule.every().hour.at(':30').do(
+        achievements_to_update, ['turn_off_leave'])
+    schedule.every().hour.at(':45').do(
+        achievements_to_update, ['turn_off_leave'])
+    schedule.every().day.at("00:05").do(
+        achievements_to_update, ['turn_off_leave'])
 
     for time in ['23:50', '23:55']:
         if time == '23:50':
-            checklist = ['lower_energy_con', 'turn_off_end', 'tree_first', 'tree_fifth', 'tree_tenth', ]
+            checklist = ['lower_energy_con', 'turn_off_end',
+                         'tree_first', 'tree_fifth', 'tree_tenth', ]
         else:
             checklist = ['complete_all_daily']
 
@@ -36,8 +44,10 @@ if __name__ == '__main__':
         schedule.every().thursday.at(time).do(achievements_to_update, checklist)
         schedule.every().friday.at(time).do(achievements_to_update, checklist)
 
-    schedule.every().friday.at("23:55").do(achievements_to_update, ['complete_daily', 'complete_weekly'])
-    schedule.every().sunday.at("23:53").do(achievements_to_update, ['cost_saving', 'schedule_based'])
+    schedule.every().friday.at("23:55").do(
+        achievements_to_update, ['complete_daily', 'complete_weekly'])
+    schedule.every().sunday.at("23:53").do(
+        achievements_to_update, ['cost_saving', 'schedule_based'])
     schedule.every().sunday.at("23:59").do(initialise_achievements)
     schedule.every().sunday.at("23:59").do(add_cost_saving_to_energy_points)
 
@@ -53,3 +63,18 @@ if __name__ == '__main__':
 
     while True:
         schedule.run_pending()
+
+
+def every15minFunction():
+    achievements_to_update(['turn_off_leave'])
+
+
+def everyDayFunction():
+    achievements_to_update(['lower_energy_con', 'turn_off_end',
+                            'tree_first', 'tree_fifth', 'tree_tenth'])
+    achievements_to_update(['complete_all_daily'])
+
+
+def everyFridayFunction():
+    achievements_to_update(['complete_daily', 'complete_weekly'])
+    achievements_to_update(['cost_saving', 'schedule_based'])

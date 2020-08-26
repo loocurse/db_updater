@@ -57,7 +57,7 @@ def update_db(df, table_name, index_to_col=False):
     else:
         print(
             f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating database <{table_name}>')
-        print(df.head())
+        # print(df.head())
         assert sorted(get_table_column(table_name)) == sorted(
             list(df.columns)), "Table columns are not the same"
         input('Proceed?')
@@ -202,8 +202,8 @@ def load_notif_and_logs(achievement_type, connection):
 
     """Reads the SQL database for the entire output and outputs the dataframe with cols stated below"""
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM notifications")
-        # cursor.execute("SELECT * FROM notifications_test")
+        # cursor.execute("SELECT * FROM notifications")
+        cursor.execute("SELECT * FROM notifications_test")
 
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
@@ -213,8 +213,8 @@ def load_notif_and_logs(achievement_type, connection):
     sql_notif_df = pd.DataFrame(results, columns=colnames)
 
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM user_log")
-        # cursor.execute("SELECT * FROM user_log_test")
+        # cursor.execute("SELECT * FROM user_log")
+        cursor.execute("SELECT * FROM user_log_test")
 
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
@@ -289,54 +289,54 @@ def notifications_update(achievement_type, achievements_list_to_update):
     '''Update databases'''
     if achievement_type == 'daily':
 
-        # notificationsDataFrame.to_csv('notifDaily.csv')
-        # userlog_DataFrame.to_csv('userDailyLog.csv')
-
-        update_db(notificationsDataFrame,
-                  'notifications', index_to_col=False)
-
-        update_db(userlog_DataFrame,
-                  'user_log', index_to_col=False)
+        notificationsDataFrame.to_csv('notifDaily.csv')
+        userlog_DataFrame.to_csv('userDailyLog.csv')
 
         # update_db(notificationsDataFrame,
-        #           'notifications_test', index_to_col=False)
+        #           'notifications', index_to_col=False)
 
         # update_db(userlog_DataFrame,
-        #           'user_log_test', index_to_col=False)
+        #           'user_log', index_to_col = False)
+
+        update_db(notificationsDataFrame,
+                  'notifications_test', index_to_col=False)
+
+        update_db(userlog_DataFrame,
+                  'user_log_test', index_to_col=False)
 
     elif achievement_type == 'weekly':
 
         # notificationsDataFrame.to_csv('notifWeekly.csv')
         # userlog_DataFrame.to_csv('userWeeklyLog.csv')
 
-        update_db(notificationsDataFrame,
-                  'notifications', index_to_col=False)
-
-        update_db(userlog_DataFrame,
-                  'user_log', index_to_col=False)
-
         # update_db(notificationsDataFrame,
-        #           'notifications_test', index_to_col=False)
+        #           'notifications', index_to_col=False)
 
         # update_db(userlog_DataFrame,
-        #           'user_log_test', index_to_col=False)
+        #           'user_log', index_to_col=False)
+
+        update_db(notificationsDataFrame,
+                  'notifications_test', index_to_col=False)
+
+        update_db(userlog_DataFrame,
+                  'user_log_test', index_to_col=False)
 
     elif achievement_type == 'bonus':
 
         # notificationsDataFrame.to_csv('notifBonus.csv')
         # userlog_DataFrame.to_csv('userBonusLog.csv')
 
-        update_db(notificationsDataFrame,
-                  'notifications', index_to_col=False)
-
-        update_db(userlog_DataFrame,
-                  'user_log', index_to_col=False)
-
         # update_db(notificationsDataFrame,
-        #           'notifications_test', index_to_col=False)
+        #           'notifications', index_to_col=False)
 
         # update_db(userlog_DataFrame,
-        #           'user_log_test', index_to_col=False)
+        #           'user_log', index_to_col=False)
+
+        update_db(notificationsDataFrame,
+                  'notifications_test', index_to_col=False)
+
+        update_db(userlog_DataFrame,
+                  'user_log_test', index_to_col=False)
 
 
 def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df):
@@ -368,6 +368,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
             user_log_df.loc[user_log_df_len] = newList
 
             print("SUCCESS", _messageText)
+            print("NOTIFICATION SENT AND LOG UPDATED")
             # _messageText = _allNotifDict[_achievementType][_messageType]
             NewDict.update({'timestamp': datetime_now})
             NewDict.update({'message': _messageText})
@@ -467,7 +468,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 else:
                     nanFunction(col)
 
-    elif achievement_type == "weekly":
+    elif achievement_type == 'weekly':
         NewDict = {}
         now_time = time.localtime()
 
@@ -561,7 +562,7 @@ def custom_query(query):
 
 
 # # # IGNORE, FOR TESTING ONLY
-# x = 2
+# x = 1
 # if x == 1:
 #     to_update = [
 #         'lower_energy_con',
@@ -578,8 +579,8 @@ def custom_query(query):
 #         'daily_schedule'
 #     ]
 
-#     # notifications_update('daily', to_update)
-#     notifications_update('bonus', to_update)
+#     notifications_update('daily', to_update)
+#     # notifications_update('bonus', to_update)
 
 # elif x == 2:
 #     to_update = [
@@ -597,3 +598,52 @@ def custom_query(query):
 #     ]
 
 #     notifications_update('weekly', to_update)
+
+
+def check_userlogtest():
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+
+    cursor = connection.cursor()
+
+    with connection.cursor() as cursor:
+        # cursor.execute("SELECT * FROM user_log")
+        cursor.execute("SELECT * FROM user_log_test")
+
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    # Notifications stored on database
+
+    # Initialise user_logs
+    user_log_df = pd.DataFrame(results, columns=colnames)
+    print(user_log_df)
+
+
+def check_notificationstest():
+    connection = psycopg2.connect(**CONNECTION_PARAMS)
+
+    cursor = connection.cursor()
+
+    with connection.cursor() as cursor:
+        # cursor.execute("SELECT * FROM user_log")
+        cursor.execute("SELECT * FROM notifications_test")
+
+        results = cursor.fetchall()
+        colnames = [desc[0] for desc in cursor.description]
+    # Notifications stored on database
+
+    # Initialise user_logs
+    notificationsDataFrame = pd.DataFrame(results, columns=colnames)
+    print(notificationsDataFrame['notifications'][0])
+
+
+def clear_userlogtest():
+    df = pd.DataFrame(
+        columns=['id', 'user_id', 'type', 'unix_time', 'description'])
+
+    update_db(df, 'user_log_test', index_to_col=False)
+
+
+if __name__ == "__main__":
+    # check_userlogtest()
+    # check_notificationstest()
+    # clear_userlogtest()

@@ -133,7 +133,7 @@ def _complete_daily(user_id):
         return points['complete_daily'] if sum(df['complete_all_daily'].to_list()) >= 20 * 4 else 0
 
 
-def _complete_all_weekly(user_id):
+def _complete_weekly(user_id):
     weekly = database_read_write.get_weekly_table()
     weekly = weekly.loc[weekly.user_id == user_id].iloc[0].to_list()
     if all(weekly):
@@ -258,6 +258,7 @@ FUNCTIONS = {
     'first_schedule': _first_schedule,
     'first_presence': _first_presence,
     'cum_savings': _cum_savings,
+    'complete_weekly': _complete_weekly,
 }
 
 DAILY_ACHIEVEMENTS = list(FUNCTIONS.keys())[:7]
@@ -272,7 +273,8 @@ def _add_energy_points_wallet(user_id, points):
     df.at[user_id, 'points'] += points
     df.reset_index(inplace=True)
     df = df[['id', 'user_id', 'points']]
-    database_read_write.update_db(df, 'points_wallet')
+    database_read_write.update_db(df, 'points_wallet_test')
+    # database_read_write.update_db(df, 'points_wallet')
 
 
 def add_cost_saving_to_energy_points():
@@ -284,8 +286,8 @@ def add_cost_saving_to_energy_points():
 
 
 def _update_daily_table(achievements_to_update):
-    assert (all(achievement in FUNCTIONS.keys()
-                for achievement in achievements_to_update))
+    # assert (all(achievement in FUNCTIONS.keys()
+    #             for achievement in achievements_to_update))
     df_daily = database_read_write.get_daily_table()
     user_ids = sorted(df_daily['user_id'].unique())
     today = database_read_write.get_today().strftime('%a')
@@ -300,13 +302,12 @@ def _update_daily_table(achievements_to_update):
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
 
     df_daily.insert(1, 'week_day', df_daily.index)
-    database_read_write.update_db(df_daily, 'achievements_daily')
-    database_read_write.notifications_update('daily', achievements)
+    # database_read_write.update_db(df_daily, 'achievements_daily')
 
 
 def _update_weekly_table(achievements_to_update):
-    assert (all(achievement in FUNCTIONS.keys()
-                for achievement in achievements_to_update))
+    # assert (all(achievement in FUNCTIONS.keys()
+    #             for achievement in achievements_to_update))
     df_weekly = database_read_write.get_weekly_table()
     user_ids = sorted(df_weekly['user_id'].unique())
     for user_id in user_ids:
@@ -317,12 +318,11 @@ def _update_weekly_table(achievements_to_update):
                     0]
                 df_weekly.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
-    database_read_write.notifications_update('weekly', achievements)
 
 
 def _update_bonus_table(achievements_to_update):
-    assert (all(achievement in FUNCTIONS.keys()
-                for achievement in achievements_to_update))
+    # assert (all(achievement in FUNCTIONS.keys()
+    #             for achievement in achievements_to_update))
     df_bonus = database_read_write.get_bonus_table()
     user_ids = sorted(df_bonus['user_id'].unique())
     for user_id in user_ids:
@@ -338,8 +338,7 @@ def _update_bonus_table(achievements_to_update):
                 df_bonus.at[index, col] = FUNCTIONS[col](user_id)
                 _add_energy_points_wallet(user_id, FUNCTIONS[col](user_id))
 
-    database_read_write.update_db(df_bonus, 'achievements_bonus')
-    database_read_write.notifications_update('bonus', achievements)
+    # database_read_write.update_db(df_bonus, 'achievements_bonus')
 
 
 def initialise_achievements():
@@ -354,9 +353,9 @@ def initialise_achievements():
             if col in FUNCTIONS.keys() and col != "cum_savings":
                 df[col] = 0
     df_daily.insert(1, 'week_day', df_daily.index)
-    database_read_write.update_db(df_daily, 'achievements_daily')
-    database_read_write.update_db(df_weekly, 'achievements_weekly')
-    database_read_write.update_db(df_bonus, 'achievements_bonus')
+    # database_read_write.update_db(df_daily, 'achievements_daily')
+    # database_read_write.update_db(df_weekly, 'achievements_weekly')
+    # database_read_write.update_db(df_bonus, 'achievements_bonus')
 
 
 def achievements_to_update(achievements):
@@ -370,52 +369,56 @@ def achievements_to_update(achievements):
 
     if update_daily_table:
         _update_daily_table(achievements)
-        # database_read_write.notifications_update('daily', achievements)
+        database_read_write.notifications_update('daily', achievements)
 
     if update_weekly_table:
         _update_weekly_table(achievements)
-        # database_read_write.notifications_update('weekly', achievements)
+        database_read_write.notifications_update('weekly', achievements)
 
     if update_bonus_table:
         _update_bonus_table(achievements)
-        # database_read_write.notifications_update('bonus', achievements)
+        database_read_write.notifications_update('bonus', achievements)
 
 
-# def achievement_update_everyday_2350():
-#     to_update = [
-#         'lower_energy_con',
-#         'turn_off_end',
-#         'complete_all_daily',
-#         'tree_first',
-#         'tree_fifth',
-#         'tree_tenth',
-#         'redeem_reward',
-#         'first_remote',
-#         'first_schedule',
-#         'cum_savings'
-#     ]
-#     _update_daily_table(to_update)
-#     _update_bonus_table(to_update)
-#     database_read_write.notifications_update('daily', to_update)
-#     database_read_write.notifications_update('bonus', to_update)
-#
-#
-# def achievements_update_every_15m():
-#     to_update = [
-#         'turn_off_leave',
-#     ]
-#     _update_daily_table(to_update)
-#     database_read_write.notifications_update('daily', to_update)
-#
-#
-# def achievement_update_every_sunday_2350():
-#     to_update = [
-#         'cost_saving',
-#         'schedule_based',
-#         'complete_weekly',
-#         'cum_savings',
-#     ]
-#     _update_weekly_table(to_update)
-#     _initialise_achievements()
-#     database_read_write.notifications_update('weekly', to_update)
-#     add_cost_saving_to_energy_points()
+def achievement_update_everyday_2350():
+    to_update = [
+        'lower_energy_con',
+        'turn_off_end',
+        'complete_all_daily',
+        'tree_first',
+        'tree_fifth',
+        'tree_tenth',
+        'redeem_reward',
+        'first_remote',
+        'first_schedule',
+        'cum_savings',
+        'daily_presence',
+        'daily_schedule'
+    ]
+    _update_daily_table(to_update)
+    _update_bonus_table(to_update)
+
+
+def achievements_update_every_15m():
+    to_update = [
+        'turn_off_leave',
+    ]
+    _update_daily_table(to_update)
+
+
+def achievement_update_every_sunday_2350():
+    to_update = [
+        'cost_saving',
+        'schedule_based',
+        'complete_weekly',
+        'complete_daily',
+        'cum_savings',
+    ]
+    _update_weekly_table(to_update)
+    # initialise_achievements()
+    # add_cost_saving_to_energy_points()
+
+
+achievement_update_everyday_2350()
+achievement_update_every_sunday_2350()
+achievements_update_every_15m()
