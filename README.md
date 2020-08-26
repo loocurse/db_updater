@@ -9,7 +9,7 @@
 | daily  | lower_energy_con   | Clock a lower energy consumption than yesterday                                            | Every weekday at 11:50pm |
 | daily  | turn_off_leave     | Turn off your plug loads when you leave your desk for a long period of time during the day | Every 15 mins            |
 | daily  | turn_off_end       | Turn off your plug loads during at the end of the day                                      | Every weekday at 11:50pm |
-| daily  | complete_all_daily | Complete all daily achievements                                                            | Every weekday at 11:55pm |
+| daily  | complete_all_daily | Complete all daily achievements                                                            | Every weekday at 11:55pm*|
 | weekly | cost_saving        | Clock a higher cost savings than last week                                                 | Every Sunday at 11:50pm  |
 | weekly | schedule_based     | Set next week's schedule-based controls                                                    | Every Sunday at 11:50pm  |
 | weekly | complete_daily     | Complete all daily achievements for 4 days of the week                                     | Every Friday at 11:50pm  |
