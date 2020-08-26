@@ -133,9 +133,9 @@ def _complete_daily(user_id):
         return points['complete_daily'] if sum(df['complete_all_daily'].to_list()) >= 20 * 4 else 0
 
 
-def _complete_all_weekly(user_id):
+def _complete_weekly(user_id):
     weekly = database_read_write.get_weekly_table()
-    weekly = weekly.loc[weekly.user_id == user_id].iloc[0].to_list()
+    weekly = weekly.loc[weekly.user_id == user_id].iloc[0].to_list()[1:-1]
     if all(weekly):
         return points['complete_all_weekly']
     else:
@@ -250,6 +250,7 @@ FUNCTIONS = {
     'cost_saving': _cost_saving,
     'schedule_based': _schedule_based,
     'complete_daily': _complete_daily,
+    'complete_weekly': _complete_weekly,
     'tree_first': _tree_first,
     'tree_fifth': _tree_fifth,
     'tree_tenth': _tree_tenth,
