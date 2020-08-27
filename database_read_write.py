@@ -559,7 +559,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                     successFunction(NewDict, all_notif_df,
                                     col, sql_notif_df, max_id)
                 elif df[col][0] == 0:
-                    failureFunction(NewDict, all_notif_df, col, sql_notif_df)
+                    print("For", col, "Its a bonus achievement so we dont need to send a Notification!")
                 else:
                     nanFunction(col)
     return [sql_notif_df, user_log_df]
