@@ -60,7 +60,7 @@ def update_db(df, table_name, index_to_col=False):
         # print(df.head())
         assert sorted(get_table_column(table_name)) == sorted(
             list(df.columns)), "Table columns are not the same"
-        # input('Proceed?')
+        input('Proceed?')
         df.to_sql(table_name, engine, if_exists='replace', index=index_to_col)
 
 
@@ -227,6 +227,8 @@ def load_notif_and_logs(achievement_type, connection):
 
 
 def notifications_update(achievement_type, achievements_list_to_update):
+
+    global max_id
     print(
         f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Getting the {achievement_type} achievements status')
     # Connect to PostgreSQL database
@@ -259,6 +261,16 @@ def notifications_update(achievement_type, achievements_list_to_update):
     listofDF = []
 
     unix_time_now = int(time.time())
+    max_id_query = 'SELECT max(id) FROM user_log_test'
+
+    try:
+        # must always +1 to max id
+        max_id = int(pd.read_sql_query(max_id_query, engine).values)
+
+    except TypeError:
+        print('hi typerror')
+
+        max_id = -1  # if no rows yet in user_log
 
     for user_id in user_ids:
         print('User ==> ', user_id)
@@ -267,7 +279,7 @@ def notifications_update(achievement_type, achievements_list_to_update):
         listofReturns = _check_update_notifications(unix_time_now,
                                                     df_achievements_info[df_achievements_info['user_id'] == user_id].reset_index(
                                                         drop=True),
-                                                    user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df)
+                                                    user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df, max_id)
         listofDF.append(listofReturns[0])  # for notifications
     notificationsDataFrame = pd.concat(listofDF)
     userlog_DataFrame = listofReturns[1]  # for logs
@@ -339,9 +351,11 @@ def notifications_update(achievement_type, achievements_list_to_update):
                   'user_log_test', index_to_col=False)
 
 
-def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df):
+def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df, max_id):
     # achievement_titles 1 2 and 3 hard coded.
-    def successFunction(NewDict, all_notif_df, col, sql_notif_df):
+    def successFunction(NewDict, all_notif_df, col, sql_notif_df, max_id):
+        print(max_id)
+        max_id += 1
         _messageType = "success"
 
         _messageText = all_notif_df.loc[all_notif_df['achievement']
@@ -360,9 +374,12 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
         # Check if turn off after leave for long periods already achieved:
         user_log_filtered = copy.deepcopy(
             user_log_df.loc[(user_log_df['user_id'] == user_id) & (user_log_df['unix_time'] > midnight)])
-
+        print(max_id)
         if log_description not in user_log_filtered['description'].to_list():
-            newList = [0, user_id, 'achievement',
+            print(max_id)
+            max_id += 1
+
+            newList = [max_id, user_id, 'achievement',
                        unix_time_now, log_description]
             user_log_df_len = len(user_log_df)
             user_log_df.loc[user_log_df_len] = newList
@@ -437,7 +454,9 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+
+                    successFunction(NewDict, all_notif_df,
+                                    col, sql_notif_df, max_id)
 
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
@@ -450,7 +469,9 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+
+                    successFunction(NewDict, all_notif_df,
+                                    col, sql_notif_df, max_id)
 
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
@@ -462,7 +483,8 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+                    successFunction(NewDict, all_notif_df,
+                                    col, sql_notif_df, max_id)
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
@@ -473,7 +495,9 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+
+                    successFunction(NewDict, all_notif_df,
+                                    col, sql_notif_df, max_id)
 
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
@@ -507,7 +531,9 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+
+                    successFunction(NewDict, all_notif_df,
+                                    col, sql_notif_df, max_id)
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
@@ -517,7 +543,8 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+                    successFunction(NewDict, all_notif_df,
+                                    col, sql_notif_df, max_id)
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
@@ -545,7 +572,8 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 _achievementName = col  # name of the achievement
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
-                    successFunction(NewDict, all_notif_df, col, sql_notif_df)
+                    successFunction(NewDict, all_notif_df,
+                                    col, sql_notif_df, max_id)
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
@@ -612,6 +640,8 @@ def custom_query(query):
 
 #     notifications_update('weekly', to_update)
 
+
+# Ignore for testing
 
 def check_userlogtest():
     connection = psycopg2.connect(**CONNECTION_PARAMS)
