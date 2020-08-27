@@ -147,7 +147,7 @@ def _tree_first(user_id):
     saved_w = database_read_write.get_cumulative_saving(user_id)
     saved_kwh = saved_w / (1000*60)
     saved_trees = round(saved_kwh * 0.201 * 0.5)
-    condition = saved_trees > 1
+    condition = saved_trees >= 1
     return points['tree_first'] if condition else 0
 
 
@@ -158,7 +158,7 @@ def _tree_fifth(user_id):
     if saved_kwh == None:
         return 0
     saved_trees = round(saved_kwh * 0.201 * 0.5)
-    condition = saved_trees > 5
+    condition = saved_trees >= 5
     return points['tree_fifth'] if condition else 0
 
 
@@ -167,7 +167,7 @@ def _tree_tenth(user_id):
     saved_w = database_read_write.get_cumulative_saving(user_id)
     saved_kwh = saved_w / (1000*60)
     saved_trees = round(saved_kwh * 0.201 * 0.5)
-    condition = saved_trees > 5
+    condition = saved_trees >= 10
     return points['tree_tenth'] if condition else 0
 
 
