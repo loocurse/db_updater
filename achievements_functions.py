@@ -274,7 +274,6 @@ def _add_energy_points_wallet(user_id, points):
     df.at[user_id, 'points'] += points
     df.reset_index(inplace=True)
     df = df[['id', 'user_id', 'points']]
-    database_read_write.update_db(df, 'points_wallet_test')
     database_read_write.update_db(df, 'points_wallet')
 
 
