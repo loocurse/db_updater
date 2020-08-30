@@ -1,6 +1,6 @@
 user_id,presence,last_detected_departure,control_activated_desktop,control_activated_laptop,control_activated_monitor,control_activated_tasklamp,control_activated_fan
-1,1,1597629919,False,False,False,False,False
-2,1,1597629919,False,False,False,False,False
-3,1,1597629919,False,False,False,False,False
-4,1,1597629919,False,False,False,False,False
-5,1,1597629919,False,False,False,False,False
+1,0,1598766826,False,True,True,False,False
+2,1,1598829367,False,False,False,False,False
+3,0,1598765430,False,True,True,False,False
+4,0,1598766839,False,True,False,False,False
+5,0,1598766852,False,True,False,False,False

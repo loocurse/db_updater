@@ -1,6 +1,6 @@
 id,user_id,device_type,device_state
 1,1,Desktop,False
-2,1,Laptop,True
+2,1,Laptop,False
 3,1,Monitor,True
 4,1,Task Lamp,False
 5,1,Fan,False
@@ -15,12 +15,12 @@ id,user_id,device_type,device_state
 14,3,Task Lamp,False
 15,3,Fan,False
 16,4,Desktop,False
-17,4,Laptop,True
+17,4,Laptop,False
 18,4,Monitor,True
 19,4,Task Lamp,True
 20,4,Fan,False
 21,5,Desktop,True
-22,5,Laptop,True
-23,5,Monitor,False
+22,5,Laptop,False
+23,5,Monitor,True
 24,5,Task Lamp,False
 25,5,Fan,False

@@ -29,13 +29,16 @@ if __name__ == '__main__':
         achievements_to_update, ['turn_off_leave'])
     schedule.every().hour.at(':45').do(
         achievements_to_update, ['turn_off_leave'])
-    schedule.every().day.at("00:05").do(achievements_to_update,
-                                        ['daily_schedule', 'daily_presence'])
+    # schedule.every().day.at("00:05").do(achievements_to_update,
+    #                                     ['daily_schedule', 'daily_presence'])
 
     for time in ['23:50', '23:55', '00:05']:
         if time == '23:50':
             checklist = ['lower_energy_con', 'turn_off_end',
                          'tree_first', 'tree_fifth', 'tree_tenth', ]
+        elif time == '00:05':
+            checklist = ['daily_schedule', 'daily_presence']
+
         else:
             checklist = ['complete_all_daily']
 
