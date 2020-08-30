@@ -214,7 +214,7 @@ def load_notif_and_logs(achievement_type, connection):
 
     with connection.cursor() as cursor:
         # cursor.execute("SELECT * FROM user_log")
-        cursor.execute("SELECT * FROM user_log_test")
+        cursor.execute("SELECT * FROM user_log")
 
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
@@ -262,7 +262,7 @@ def notifications_update(achievement_type, achievements_list_to_update):
     unix_time_now = int(time.time())
 
     for user_id in user_ids:
-        print('User ==> ', user_id)
+        # print('User ==> ', user_id)
 
         '''Functions to append new notifications and logs'''
         listofReturns = _check_update_notifications(unix_time_now,
@@ -290,8 +290,8 @@ def notifications_update(achievement_type, achievements_list_to_update):
     '''Update databases'''
     if achievement_type == 'daily':
 
-        notificationsDataFrame.to_csv('notifDaily.csv')
-        userlog_DataFrame.to_csv('userDailyLog.csv')
+        # notificationsDataFrame.to_csv('notifDaily.csv')
+        # userlog_DataFrame.to_csv('userDailyLog.csv')
 
         # update_db(notificationsDataFrame,
         #           'notifications', index_to_col=False)
@@ -300,10 +300,10 @@ def notifications_update(achievement_type, achievements_list_to_update):
         #           'user_log', index_to_col = False)
 
         update_db(notificationsDataFrame,
-                  'notifications_test', index_to_col=False)
+                  'notifications', index_to_col=False)
 
         update_db(userlog_DataFrame,
-                  'user_log_test', index_to_col=False)
+                  'user_log', index_to_col=False)
 
     elif achievement_type == 'weekly':
 
@@ -317,10 +317,10 @@ def notifications_update(achievement_type, achievements_list_to_update):
         #           'user_log', index_to_col=False)
 
         update_db(notificationsDataFrame,
-                  'notifications_test', index_to_col=False)
+                  'notifications', index_to_col=False)
 
         update_db(userlog_DataFrame,
-                  'user_log_test', index_to_col=False)
+                  'user_log', index_to_col=False)
 
     elif achievement_type == 'bonus':
 
@@ -334,10 +334,10 @@ def notifications_update(achievement_type, achievements_list_to_update):
         #           'user_log', index_to_col=False)
 
         update_db(notificationsDataFrame,
-                  'notifications_test', index_to_col=False)
+                  'notifications', index_to_col=False)
 
         update_db(userlog_DataFrame,
-                  'user_log_test', index_to_col=False)
+                  'user_log', index_to_col=False)
 
 
 def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df, max_id):
@@ -370,8 +370,9 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                        unix_time_now, log_description]
             user_log_df.loc[user_log_df_len] = newList
 
-            print("SUCCESS", _messageText)
-            print("NOTIFICATION SENT AND LOG UPDATED")
+            # print("SUCCESS", _messageText)
+            # print("NOTIFICATION SENT AND LOG UPDATED")
+
             # _messageText = _allNotifDict[_achievementType][_messageType]
             NewDict.update({'timestamp': datetime_now})
             NewDict.update({'message': _messageText})
@@ -381,13 +382,13 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
             sql_notif_df['notifications'][0]['notifications'].append(
                 copy.deepcopy(NewDict))
 
-        else:
+        # else:
 
-            print("UPDATE FOUND ALREADY:", _messageText)
-            print(
-                "NO NEED TO UPDATE NOTIFICATIONS")
-            print(
-                "NO NEED TO UPDATE USER LOG")
+            # print("UPDATE FOUND ALREADY:", _messageText)
+            # print(
+            #     "NO NEED TO UPDATE NOTIFICATIONS")
+            # print(
+            #     "NO NEED TO UPDATE USER LOG")
 
     def failureFunction(NewDict, all_notif_df, col, sql_notif_df):
         _messageType = "failure"
@@ -395,8 +396,8 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
 
         _messageText = all_notif_df.loc[all_notif_df['achievement']
                                         == col][_messageType].reset_index(drop=True)[0].replace('\t', '')
-        print("FAILURE", _messageText)
-        print("Notification of Failure Sent!")
+        # print("FAILURE", _messageText)
+        # print("Notification of Failure Sent!")
 
         NewDict.update({'timestamp': datetime_now})
         NewDict.update({'message': _messageText})
@@ -432,7 +433,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
         sql_notif_df.reset_index(drop=True, inplace=True)
 
         for col in df.columns:
-            print("Checking ", col)
+            # print("Checking ", col)
 
             # Every Day 11:55pm**
             if any(item in ['complete_all_daily'] for item in achievements_list_to_update) and col in ['complete_all_daily']:  # End of day mark
@@ -507,7 +508,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
         sql_notif_df.reset_index(drop=True, inplace=True)
 
         for col in df.columns:
-            print("Checking ", col)
+            # print("Checking ", col)
 
             # Every Sunday
             if any(item in ['cost_saving', 'schedule_based'] for item in achievements_list_to_update) and col in ['cost_saving', 'schedule_based']:  # End of day mark
@@ -550,7 +551,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
         sql_notif_df = sql_notif_df.loc[sql_notif_df['user_id'] == user_id]
         sql_notif_df.reset_index(drop=True, inplace=True)
         for col in df.columns:
-            print("Checking ", col)
+            # print("Checking ", col)
 
             if any(item in ['tree_first', 'tree_fifth', 'tree_tenth'] for item in achievements_list_to_update) and col in ['tree_first', 'tree_fifth', 'tree_tenth']:  # End of day mark
                 _achievementName = col  # name of the achievement
@@ -558,8 +559,9 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 if df[col][0] > 0:
                     successFunction(NewDict, all_notif_df,
                                     col, sql_notif_df, max_id)
-                elif df[col][0] == 0:
-                    print("For", col, "Its a bonus achievement so we dont need to send a Notification!")
+                # elif df[col][0] == 0:
+                #     print(
+                #         "For", col, "Its a bonus achievement so we dont need to send a Notification!")
                 else:
                     nanFunction(col)
     return [sql_notif_df, user_log_df]
@@ -689,8 +691,8 @@ def clear_userlogtest():
     update_db(df, 'user_log_test', index_to_col=False)
 
 
-if __name__ == "__main__":
-    check_userlogtest()
+# if __name__ == "__main__":
+#     check_userlogtest()
     # check_notificationstest()
     # check_achievementstable()
     # clear_userlogtest()
