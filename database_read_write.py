@@ -203,7 +203,7 @@ def load_notif_and_logs(achievement_type, connection):
     """Reads the SQL database for the entire output and outputs the dataframe with cols stated below"""
     with connection.cursor() as cursor:
         # cursor.execute("SELECT * FROM notifications")
-        cursor.execute("SELECT * FROM notifications_test")
+        cursor.execute("SELECT * FROM notifications")
 
         results = cursor.fetchall()
         colnames = [desc[0] for desc in cursor.description]
@@ -629,68 +629,68 @@ def custom_query(query):
 
 # Ignore for testing
 
-def check_userlogtest():
-    connection = psycopg2.connect(**CONNECTION_PARAMS)
-
-    cursor = connection.cursor()
-
-    with connection.cursor() as cursor:
-        # cursor.execute("SELECT * FROM user_log")
-        cursor.execute("SELECT * FROM user_log_test")
-
-        results = cursor.fetchall()
-        colnames = [desc[0] for desc in cursor.description]
-    # Notifications stored on database
-
-    # Initialise user_logs
-    user_log_df = pd.DataFrame(results, columns=colnames)
-    print(user_log_df)
-    print(len(user_log_df))
-
-
-def check_notificationstest():
-    connection = psycopg2.connect(**CONNECTION_PARAMS)
-
-    cursor = connection.cursor()
-
-    with connection.cursor() as cursor:
-        # cursor.execute("SELECT * FROM user_log")
-        cursor.execute("SELECT * FROM notifications_test")
-
-        results = cursor.fetchall()
-        colnames = [desc[0] for desc in cursor.description]
-    # Notifications stored on database
-
-    # Initialise user_logs
-    notificationsDataFrame = pd.DataFrame(results, columns=colnames)
-    print(notificationsDataFrame['notifications'][0])
-
-
-def check_achievementstable():
-    connection = psycopg2.connect(**CONNECTION_PARAMS)
-
-    cursor = connection.cursor()
-
-    with connection.cursor() as cursor:
-        # cursor.execute("SELECT * FROM user_log")
-        cursor.execute("SELECT * FROM achievements_bonus")
-
-        results = cursor.fetchall()
-        colnames = [desc[0] for desc in cursor.description]
-    # Notifications stored on database
-
-    # Initialise user_logs
-    achievementsDataFrame = pd.DataFrame(results, columns=colnames)
-    print(achievementsDataFrame)
-
-
-def clear_userlogtest():
-    df = pd.DataFrame(
-        columns=['id', 'user_id', 'type', 'unix_time', 'description'])
-
-    update_db(df, 'user_log_test', index_to_col=False)
-
-
+# def check_userlogtest():
+#     connection = psycopg2.connect(**CONNECTION_PARAMS)
+#
+#     cursor = connection.cursor()
+#
+#     with connection.cursor() as cursor:
+#         # cursor.execute("SELECT * FROM user_log")
+#         cursor.execute("SELECT * FROM user_log_test")
+#
+#         results = cursor.fetchall()
+#         colnames = [desc[0] for desc in cursor.description]
+#     # Notifications stored on database
+#
+#     # Initialise user_logs
+#     user_log_df = pd.DataFrame(results, columns=colnames)
+#     print(user_log_df)
+#     print(len(user_log_df))
+#
+#
+# def check_notificationstest():
+#     connection = psycopg2.connect(**CONNECTION_PARAMS)
+#
+#     cursor = connection.cursor()
+#
+#     with connection.cursor() as cursor:
+#         # cursor.execute("SELECT * FROM user_log")
+#         cursor.execute("SELECT * FROM notifications_test")
+#
+#         results = cursor.fetchall()
+#         colnames = [desc[0] for desc in cursor.description]
+#     # Notifications stored on database
+#
+#     # Initialise user_logs
+#     notificationsDataFrame = pd.DataFrame(results, columns=colnames)
+#     print(notificationsDataFrame['notifications'][0])
+#
+#
+# def check_achievementstable():
+#     connection = psycopg2.connect(**CONNECTION_PARAMS)
+#
+#     cursor = connection.cursor()
+#
+#     with connection.cursor() as cursor:
+#         # cursor.execute("SELECT * FROM user_log")
+#         cursor.execute("SELECT * FROM achievements_bonus")
+#
+#         results = cursor.fetchall()
+#         colnames = [desc[0] for desc in cursor.description]
+#     # Notifications stored on database
+#
+#     # Initialise user_logs
+#     achievementsDataFrame = pd.DataFrame(results, columns=colnames)
+#     print(achievementsDataFrame)
+#
+#
+# def clear_userlogtest():
+#     df = pd.DataFrame(
+#         columns=['id', 'user_id', 'type', 'unix_time', 'description'])
+#
+#     update_db(df, 'user_log_test', index_to_col=False)
+#
+#
 # if __name__ == "__main__":
 #     check_userlogtest()
     # check_notificationstest()

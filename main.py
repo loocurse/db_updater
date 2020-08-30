@@ -68,23 +68,23 @@ if __name__ == '__main__':
 
 # # IGNORE TO TEST
 
-def every15minFunction():
-    achievements_to_update(['turn_off_leave'])
-
-
-def everyDayFunction():
-    achievements_to_update(['lower_energy_con', 'turn_off_end',
-                            'tree_first', 'tree_fifth', 'tree_tenth'])
-    achievements_to_update(['complete_all_daily'])
-
-
-def everyFridayFunction():
-    achievements_to_update(['complete_daily', 'complete_weekly'])
-    achievements_to_update(['cost_saving', 'schedule_based'])
-
-
-def every1205amFunction():
-    achievements_to_update(['daily_schedule', 'daily_presence'])
+# def every15minFunction():
+#     achievements_to_update(['turn_off_leave'])
+#
+#
+# def everyDayFunction():
+#     achievements_to_update(['lower_energy_con', 'turn_off_end',
+#                             'tree_first', 'tree_fifth', 'tree_tenth'])
+#     achievements_to_update(['complete_all_daily'])
+#
+#
+# def everyFridayFunction():
+#     achievements_to_update(['complete_daily', 'complete_weekly'])
+#     achievements_to_update(['cost_saving', 'schedule_based'])
+#
+#
+# def every1205amFunction():
+#     achievements_to_update(['daily_schedule', 'daily_presence'])
 
 
 # every15minFunction()  # ['turn_off_leave']
