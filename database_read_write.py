@@ -268,7 +268,7 @@ def notifications_update(achievement_type, achievements_list_to_update):
         listofReturns = _check_update_notifications(unix_time_now,
                                                     df_achievements_info[df_achievements_info['user_id'] == user_id].reset_index(
                                                         drop=True),
-                                                    user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df, max_id)
+                                                    user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df)
         listofDF.append(listofReturns[0])  # for notifications
     notificationsDataFrame = pd.concat(listofDF)
     userlog_DataFrame = listofReturns[1]  # for logs
@@ -340,10 +340,10 @@ def notifications_update(achievement_type, achievements_list_to_update):
                   'user_log', index_to_col=False)
 
 
-def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df, max_id):
+def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_notif_df, achievement_type, achievements_list_to_update, user_log_df):
     # achievement_titles 1 2 and 3 hard coded.
 
-    def successFunction(NewDict, all_notif_df, col, sql_notif_df, max_id):
+    def successFunction(NewDict, all_notif_df, col, sql_notif_df):
 
         _messageType = "success"
 
@@ -442,7 +442,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
                     successFunction(NewDict, all_notif_df,
-                                    col, sql_notif_df, max_id)
+                                    col, sql_notif_df)
 
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
@@ -457,7 +457,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 if df[col][0] > 0:
 
                     successFunction(NewDict, all_notif_df,
-                                    col, sql_notif_df, max_id)
+                                    col, sql_notif_df)
 
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
@@ -470,7 +470,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
                     successFunction(NewDict, all_notif_df,
-                                    col, sql_notif_df, max_id)
+                                    col, sql_notif_df)
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
@@ -482,7 +482,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
                     successFunction(NewDict, all_notif_df,
-                                    col, sql_notif_df, max_id)
+                                    col, sql_notif_df)
 
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
@@ -518,7 +518,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 if df[col][0] > 0:
 
                     successFunction(NewDict, all_notif_df,
-                                    col, sql_notif_df, max_id)
+                                    col, sql_notif_df)
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
@@ -529,7 +529,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
                     successFunction(NewDict, all_notif_df,
-                                    col, sql_notif_df, max_id)
+                                    col, sql_notif_df)
                 elif df[col][0] == 0:
                     failureFunction(NewDict, all_notif_df, col, sql_notif_df)
                 else:
@@ -558,7 +558,7 @@ def _check_update_notifications(unix_time_now, df, user_id, sql_notif_df, all_no
                 # _achievementType = 'daily'  # Changes depending on achivement type! Important
                 if df[col][0] > 0:
                     successFunction(NewDict, all_notif_df,
-                                    col, sql_notif_df, max_id)
+                                    col, sql_notif_df)
                 # elif df[col][0] == 0:
                 #     print(
                 #         "For", col, "Its a bonus achievement so we dont need to send a Notification!")
