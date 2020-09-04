@@ -1204,6 +1204,9 @@ def manager_graph_average_monthly_weekly_update():
         datetime.now() - start_time))
 
 
+'''For Users Baseline'''
+
+
 def usersGetAverageFunction(type=None):
     # Get Average Daily Consumption for Past 6 months
 
@@ -1242,7 +1245,7 @@ def usersGetAverageFunction(type=None):
 
                 df_last_dates = copy.deepcopy(
                     df_day_avg.tail(7))  # Last 7 days
-
+                print(df_last_dates)
                 for dates in df_last_dates['date']:
                     # Filter past 6 months from reference date
                     six_months_before_date = dates - \
@@ -1357,9 +1360,6 @@ def usersGetAverageFunction(type=None):
 
     df_avg.to_csv(".\\users_csv\\users_AverageDailyWeeklyMonthlyYearly.csv")
     update_db(df_avg.reset_index(drop=True), 'users_consumption_summary')
-
-
-'''For Users Baseline'''
 
 
 def users_hourly_update():
@@ -1672,10 +1672,10 @@ def _users_average_monthFunction(df):
     return df_month, df_month_pie
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    # graph_hourly_update()
-    manager_graph_daily_update()
-    manager_graph_weekly_monthly_update()
-    # usersGetAverageFunction()
-    # managerGetAverageFunction()
+#     # graph_hourly_update()
+#     # manager_graph_daily_update()
+#     # manager_graph_weekly_monthly_update()
+#     usersGetAverageFunction()
+#     # managerGetAverageFunction()
