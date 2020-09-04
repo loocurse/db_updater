@@ -7,6 +7,8 @@ from datetime import date
 from datetime import timezone
 import numpy as np
 import pytz
+from dateutil import relativedelta
+from datetime import datetime
 
 pd.set_option('mode.chained_assignment', None)
 
@@ -41,6 +43,46 @@ def _initialise_variables(df):
     df['power_kWh'] = df['power'].apply(generate_kWh)
     df['cost'] = df['power_kWh'].apply(generate_cost)
     df['device_type'] = df['device_type'].str.capitalize()
+    return df
+
+
+def initialise_variables(df, type):
+    # Initialise some variables
+    global singapore_tariff_rate
+    singapore_tariff_rate = 0.201
+
+    def generate_month(unix_time):
+        return dt.datetime.fromtimestamp(unix_time).strftime('%b')
+
+    def generate_year(unix_time):
+        return dt.datetime.fromtimestamp(unix_time).strftime('%Y')
+
+    def generate_dateAMPM(unix_time):
+        return dt.datetime.fromtimestamp(unix_time).strftime('%I:%M%p')
+
+    def generate_hour(unix_time):
+        return dt.datetime.fromtimestamp(unix_time).strftime('%H')
+
+    def generate_kWh(val):
+        return round(val / (1000 * 60), 9)
+
+    def generate_cost(kwh):
+        return round(kwh * singapore_tariff_rate, 9)
+
+    if type == 'year':
+        df['year'] = df['unix_time'].apply(generate_year)
+        df['power_kWh'] = df['power'].apply(generate_kWh)
+        df['cost'] = df['power_kWh'].apply(generate_cost)
+        df['device_type'] = df['device_type'].str.capitalize()
+
+    else:
+        df['month'] = df['unix_time'].apply(generate_month)
+        df['year'] = df['unix_time'].apply(generate_year)
+        df['dates_AMPM'] = df['unix_time'].apply(generate_dateAMPM)
+        df['hours'] = df['unix_time'].apply(generate_hour)
+        df['power_kWh'] = df['power'].apply(generate_kWh)
+        df['cost'] = df['power_kWh'].apply(generate_cost)
+        df['device_type'] = df['device_type'].str.capitalize()
     return df
 
 
@@ -110,8 +152,9 @@ def _weekFunction(df):
     df_week_random.reset_index(drop=True, inplace=True)
 
     # Initiate df for line
-    df_week = df_week_random  # already filtered past 4 weeks
-    df_week_pie = df_week_random  # already filtered past 4 weeks
+    df_week = copy.deepcopy(df_week_random)  # already filtered past 4 weeks
+    # already filtered past 4 weeks
+    df_week_pie = copy.deepcopy(df_week_random)
 
     # 4. Aggregate by Week
 
@@ -264,8 +307,6 @@ def _dayFunction(df):
 
 def _monthFunction(df):
     global df_month, df_month_pie
-    # end_date = '24/07/2020'
-    end_date = str(datetime.today().strftime('%d/%m/%Y'))
     df = _initialise_variables(df)
 
     # START OF MONTH FUNCTION
@@ -278,12 +319,10 @@ def _monthFunction(df):
     # Filter data for Last 6 months
     # Get names of indexes for which column Date only has values 6 months before 1/2/2020
     df_month['date'] = pd.to_datetime(df_month['date'])
-    end = end_date
-    end_first_day_date = dt.datetime.strptime(
-        end, '%d/%m/%Y').replace(day=1)
-
-    start = end_first_day_date - \
-        dateutil.relativedelta.relativedelta(months=5)
+    end = datetime.today().replace(day=1)
+    start = end - dateutil.relativedelta.relativedelta(months=5)
+    start = start.replace(day=1)
+    print(end, 'to', start)
 
     mask = (df_month['date'] > start) & (df_month['date'] <= end)
 
@@ -315,6 +354,51 @@ def _monthFunction(df):
     # # END OF MONTH FUNCTION
 
     return df_month, df_month_pie
+
+
+def _yearFunction(df):
+    # end_date = '24/7/2020'
+    # end_date = str(datetime.today().strftime('%d/%-m/%Y'))
+    type = 'year'
+    df = initialise_variables(df, type)
+    global df_year_pie, df_year
+
+    # Line Chart
+
+    # Create new dataframe
+    df_year = copy.deepcopy(df)
+    df_year_pie = df
+
+    # Line chart
+    # Aggregate data
+
+    aggregation_functions = {'power': 'sum', 'power_kWh': 'sum',
+                             'cost': 'sum'}  # sum power when combining rows.
+    df_year = df_year.groupby(
+        ['year'], as_index=False).aggregate(aggregation_functions)
+    df_year.reset_index(drop=True, inplace=True)
+    # # Optional Convert to %d/%m/%Y
+    # df_year['date'] = df_year['date'].dt.strftime('%d/%m/%Y')
+
+    # Pie Chart
+
+    # Aggregate data
+
+    aggregation_functions = {'power': 'sum', 'power_kWh': 'sum',
+                             'cost': 'sum'}  # sum power when combining rows.
+    df_year_pie = df_year_pie.groupby(
+        ['year', 'device_type'], as_index=False).aggregate(aggregation_functions)
+    df_year_pie.reset_index(drop=True, inplace=True)
+
+    # # Optional Convert to %d/%m/%Y
+    # df_year_pie['date'] = df_year_pie['date'].dt.strftime('%d/%m/%Y')
+    # End of hour function
+
+    # Add in cost and energy column
+    df_year.to_csv('.\\manager_csv\\manager_df_year.csv')
+    df_year_pie.to_csv('.\\manager_csv\\manager_df_year_pie.csv')
+
+    return df_year, df_year_pie
 
 
 def _calculate_cost(power):
@@ -467,3 +551,365 @@ def graph_weekly_monthly_update():
     update_db(monthly_costsavings.reset_index(drop=True), 'costsavings_months')
     print('Completed weekly and monthly update in {} seconds.'.format(
         datetime.now() - start_time))
+
+
+def manager_graph_yearly_update():
+    print(
+        f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating manager yearly consumption')
+    start_time = datetime.now()
+    df = read_yearly_consumption_db()
+    yearly_manager_line = pd.DataFrame()
+    yearly_manager_pie = pd.DataFrame()
+    user_ids = sorted(df['user_id'].unique())
+
+    for user_id in user_ids:
+        line_data, pie_data = _yearFunction(
+            df[df['user_id'] == user_id].reset_index(drop=True))
+        line_data.insert(0, 'user_id', user_id)
+        pie_data.insert(0, 'user_id', user_id)
+        yearly_manager_line = pd.concat(
+            [yearly_manager_line, line_data], ignore_index=True)
+        yearly_manager_pie = pd.concat(
+            [yearly_manager_pie, pie_data], ignore_index=True)
+
+    # update_db(yearly_manager_line.reset_index(drop=True),
+    #           'historical_manager_years_line')
+    # update_db(yearly_manager_pie.reset_index(drop=True),
+    #           'historical_manager_years_pie')
+    # print('Complete yearly update in {} seconds.'.format(
+    #     datetime.now() - start_time))
+
+
+def managerGetAverageFunction(type=None):
+    # Get Average Daily Consumption for Past 6 months
+
+    daily_usage_7m = pd.read_csv('manager_csv/manager_7m_daily.csv')
+    weekly_usage_7m = pd.read_csv('manager_csv/manager_7m_weekly.csv')
+    monthly_usage_1y = pd.read_csv('manager_csv/manager_1y_monthly.csv')
+    yearly_usage_3y = pd.read_csv('manager_csv/manager_df_year.csv')
+    daily_usage_7m['date'] = pd.to_datetime(
+        daily_usage_7m['date'], format='%Y-%m-%d')
+
+    weekly_usage_7m['date'] = pd.to_datetime(
+        weekly_usage_7m['date'], format='%Y-%m-%d')
+
+    monthly_usage_1y['date'] = pd.to_datetime(
+        monthly_usage_1y['date'], format='%Y-%m-%d')
+
+    listofDf = [daily_usage_7m, weekly_usage_7m,
+                monthly_usage_1y, yearly_usage_3y]
+    types = ['daily', 'weekly', 'monthly', 'yearly']
+
+    x = 0
+    df_avg = pd.DataFrame(
+        [], columns=["type", "avg_energy", "avg_cost", "date"])
+
+    for i in listofDf:
+        if types[x] == 'daily':
+            df_day_avg = i
+            df_last_dates = copy.deepcopy(df_day_avg.tail(7))  # Last 7 days
+            print(df_last_dates)
+            for dates in df_last_dates['date']:
+                # Filter past 6 months from reference date
+                six_months_before_date = dates - \
+                    relativedelta.relativedelta(months=6)
+
+                print(dates, ' to ', six_months_before_date)
+
+                # Create mask and filter past 6 months
+                mask = (df_day_avg['date'] > six_months_before_date) & (
+                    df_day_avg['date'] <= dates)
+                # Delete these row indexes from dataFrame
+                df_day_avg = df_day_avg.loc[mask]
+                df_day_avg.reset_index(drop=True, inplace=True)
+
+                dfSeries = [types[x], df_day_avg['power_kWh'].mean(),
+                            df_day_avg['cost'].mean(), dates]
+                dfSeries = pd.Series(dfSeries, index=df_avg.columns)
+                df_avg = df_avg.append(dfSeries, ignore_index=True)
+
+        elif types[x] == 'weekly':
+            print('week')
+            df_weekly_avg = i
+            df_last_dates = copy.deepcopy(
+                df_weekly_avg.tail(4))  # Last 4 weeks
+
+            for dates in df_last_dates['date']:
+                # Filter past 6 months from reference date
+                six_months_before_date = dates - \
+                    relativedelta.relativedelta(months=6)
+
+                print(dates, ' to ', six_months_before_date)
+
+                # Create mask and filter past 6 months
+                mask = (df_weekly_avg['date'] > six_months_before_date) & (
+                    df_weekly_avg['date'] <= dates)
+                # Delete these row indexes from dataFrame
+                df_weekly_avg = df_weekly_avg.loc[mask]
+                df_weekly_avg.reset_index(drop=True, inplace=True)
+
+                dfSeries = [types[x], df_weekly_avg['power_kWh'].mean(),
+                            df_weekly_avg['cost'].mean(), dates]
+                dfSeries = pd.Series(dfSeries, index=df_avg.columns)
+                df_avg = df_avg.append(dfSeries, ignore_index=True)
+
+        elif types[x] == 'monthly':
+            print('month')
+            df_monthly_avg = i
+            df_last_dates = copy.deepcopy(
+                df_monthly_avg.tail(6))  # Last 6 months
+
+            for dates in df_last_dates['date']:
+                # Filter past 6 months from reference date
+                six_months_before_date = dates - \
+                    relativedelta.relativedelta(months=6)
+
+                print(dates, ' to ', six_months_before_date)
+
+                # Create mask and filter past 6 months
+                mask = (df_monthly_avg['date'] > six_months_before_date) & (
+                    df_monthly_avg['date'] <= dates)
+                # Delete these row indexes from dataFrame
+                df_monthly_avg = df_monthly_avg.loc[mask]
+                df_monthly_avg.reset_index(drop=True, inplace=True)
+
+                dfSeries = [types[x], df_monthly_avg['power_kWh'].mean(),
+                            df_monthly_avg['cost'].mean(), dates]
+                dfSeries = pd.Series(dfSeries, index=df_avg.columns)
+                df_avg = df_avg.append(dfSeries, ignore_index=True)
+
+        elif types[x] == 'yearly':
+            df_year_avg = i
+            dfSeries = [types[x], df_year_avg['power_kWh'].mean(),
+                        df_year_avg['cost'].mean(), dates]
+            dfSeries = pd.Series(dfSeries, index=df_avg.columns)
+            df_avg = df_avg.append(dfSeries, ignore_index=True)
+        x += 1
+
+    df_avg.to_csv(".\\manager_csv\\AverageDailyWeeklyMonthlyYearly.csv")
+
+
+def manager_generate_daily(df):
+    global df_day, df_day_pie
+
+    df = _initialise_variables(df)
+
+    # Start of Day function
+    # Line Chart
+
+    # Create new dataframe
+    df_day = df
+
+    # Create df for Piechart
+    df_day_pie = copy.deepcopy(df_day)
+
+    # Aggregate data
+
+    aggregation_functions = {'power': 'sum', 'month': 'first', 'time': 'first',
+                             'year': 'first', 'power_kWh': 'sum', 'cost': 'sum'}  # sum power when combining rows.
+    df_day = df_day.groupby(['date'], as_index=False).aggregate(
+        aggregation_functions)
+    df_day.reset_index(drop=True, inplace=True)
+
+    # Optional Convert to %d/%m/%Y
+    df_day['date_withoutYear'] = df_day['date'].dt.strftime('%d/%m')
+
+    # Pie Chart
+
+    # Aggregate data based on device type for past 7 days
+
+    aggregation_functions = {'power': 'sum', 'month': 'first', 'time': 'first',
+                             'year': 'first', 'power_kWh': 'sum',
+                             'cost': 'sum'}  # sum power when combining rows.
+    df_day_pie = df_day_pie.groupby(
+        ['device_type', 'date'], as_index=False).aggregate(aggregation_functions)
+    df_day_pie.reset_index(drop=True, inplace=True)
+    # End of day function
+
+    return df_day, df_day_pie
+
+
+def manager_generate_weekly(df):
+    global df_week_pie, df_week, df_week_random
+    df = _initialise_variables(df)
+
+    today = date.today()
+
+    end = today.strftime("%d/%m/%Y")
+    end = dt.datetime.strptime(end, '%d/%m/%Y')
+    # print(end)
+    # Create new dataframe
+    df_week_random = copy.deepcopy(df)
+
+    # Start of week function
+
+    # For Line Chart
+    aggregation_functions = {'power': 'sum', 'power_kWh': 'sum',
+                             'cost': 'sum'}
+    df['date'] = pd.to_datetime(df['date']) - pd.to_timedelta(7, unit='d')
+    df = df.groupby([pd.Grouper(key='date', freq='W-MON')]
+                    ).aggregate(aggregation_functions).reset_index().sort_values('date')
+
+    df_week = df
+
+    # For pie chart
+    # Get names of indexes for which column Date only has values 4 weeks before 29/2/2020
+    df_week_random['date'] = pd.to_datetime(df_week_random['date'])
+    start = end - dt.timedelta(28)
+    mask = (df_week_random['date'] > start) & (df_week_random['date'] <= end)
+
+    # Delete these row indexes from dataFrame
+    df_week_random = df_week_random.loc[mask]
+    df_week_random.reset_index(drop=True, inplace=True)
+    # print(df_week_random)
+    # 2. Append new column called Week
+
+    # Df_week for later
+    # TODO SettingWithCopyWarning here
+    df_week_random['week'] = None
+
+    # 3. Label weeks 1, 2, 3, 4 based on start date
+
+    start = end - dt.timedelta(7)
+    # If datetime > start & datetime <= end ==> Week 1
+    # idx = df.index[df['BoolCol']] # Search for indexes of value in column
+    # df.loc[idx] # Get rows with all the columns
+    df_week_random.loc[(df_week_random['date'] > start) & (
+        df_week_random['date'] <= end), ['week']] = "{}".format(start.strftime('%d %b'))
+    df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(7))) &
+                       (df_week_random['date'] <= (end - dt.timedelta(7))), ['week']] = "{}".format(
+        (start - dt.timedelta(7)).strftime('%d %b'))
+    df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(14))) &
+                       (df_week_random['date'] <= (end - dt.timedelta(14))), ['week']] = "{}".format(
+        (start - dt.timedelta(14)).strftime('%d %b'))
+    df_week_random.loc[(df_week_random['date'] > (start - dt.timedelta(21))) &
+                       (df_week_random['date'] <= (end - dt.timedelta(21))), ['week']] = "{}".format(
+        (start - dt.timedelta(21)).strftime('%d %b'))
+
+    df_week_random.reset_index(drop=True, inplace=True)
+
+    # Initiate df for line
+    df_week_pie = df_week_random  # already filtered past 4 weeks
+
+    # 4. Aggregate by Week
+    # Pie Chart
+
+    # Aggregate data
+
+    aggregation_functions = {'power': 'sum', 'month': 'first', 'time': 'first',
+                             'year': 'first', 'power_kWh': 'sum',
+                             'cost': 'sum'}  # sum power when combining rows.
+    df_week_pie = df_week_pie.groupby(
+        ['device_type', 'week'], as_index=False).aggregate(aggregation_functions)
+    df_week_pie.reset_index(drop=True, inplace=True)
+
+    # End of week function
+
+    # df_week_line.to_csv(".\\Data Tables\\df_week_line.csv")
+    # df_week_pie.to_csv(".\\Data Tables\\df_week_pie.csv")
+
+    return df_week, df_week_pie
+
+
+def manager_generate_monthly(df):
+    global df_month, df_month_pie
+
+    end_date = str(datetime.today().strftime('%d/%m/%Y'))
+    df = _initialise_variables(df)
+
+    # START OF MONTH FUNCTION
+    # 1) For Line Chart
+    # Create new dataframe
+    '''Insert SQL Code'''
+    df_month = copy.deepcopy(df)
+    '''Output SQL Code'''
+
+    # Aggregate Data into Months based on last 6 months
+    aggregation_functions = {'power': 'sum', 'time': 'first',
+                             'power_kWh': 'sum', 'date': 'first',
+                             'cost': 'sum'}  # sum power when combining rows.
+    df_month = df_month.groupby(
+        ['month', 'year'], as_index=False).aggregate(aggregation_functions)
+    df_month = df_month.sort_values(
+        by=['date'], ascending=True, ignore_index=True)
+    df_month.reset_index(drop=True, inplace=True)
+
+    df_month_pie = copy.deepcopy(df)
+
+    # 2) For Pie Chart
+    # Aggregate Data into Months based on last 6 months
+
+    aggregation_functions = {'power': 'sum', 'time': 'first', 'power_kWh': 'sum',
+                             'cost': 'sum'}  # sum power when combining rows.
+    df_month_pie = df_month_pie.groupby(
+        ['device_type', 'month', 'year'], as_index=False).aggregate(aggregation_functions)
+    df_month_pie.reset_index(drop=True, inplace=True)
+
+    # # END OF MONTH FUNCTION
+
+    return df_month, df_month_pie
+
+
+def manager_graph_daily_update():
+    print(
+        f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating daily consumption')
+    start_time = datetime.now()
+    df = manager_read_7m_consumption_db()
+    daily_line = pd.DataFrame()
+    daily_pie = pd.DataFrame()
+    user_ids = sorted(df['user_id'].unique())
+
+    for user_id in user_ids:
+        line_data, pie_data = manager_generate_daily(
+            df[df['user_id'] == user_id].reset_index(drop=True))
+        line_data.insert(0, 'user_id', user_id)
+        pie_data.insert(0, 'user_id', user_id)
+        daily_line = pd.concat([daily_line, line_data], ignore_index=True)
+        daily_pie = pd.concat([daily_pie, pie_data], ignore_index=True)
+
+    daily_line.to_csv('.\\manager_csv\\manager_7m_daily.csv')
+    daily_pie.to_csv('.\\manager_csv\\manager_7m_daily_pie.csv')
+    # update_db(daily_line.reset_index(drop=True), 'historical_days_line')
+    # update_db(daily_pie.reset_index(drop=True), 'historical_days_pie')
+    # print('Complete daily update in {} seconds.'.format(
+    #     datetime.now() - start_time))
+
+
+def manager_graph_monthly_weekly_update():
+    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating weekly and monthly consumption')
+    start_time = datetime.now()
+    df = manager_read_7m_consumption_db()
+    df2 = manager_read_1y_consumption_db()
+    weekly_line = pd.DataFrame()
+    weekly_pie = pd.DataFrame()
+    monthly_line = pd.DataFrame()
+    monthly_pie = pd.DataFrame()
+
+    user_ids = sorted(df['user_id'].unique())
+
+    for user_id in user_ids:
+        line_week, pie_week = manager_generate_weekly(
+            df[df['user_id'] == user_id].reset_index(drop=True))
+        line_week.insert(0, 'user_id', user_id)
+        pie_week.insert(0, 'user_id', user_id)
+        weekly_line = pd.concat([weekly_line, line_week], ignore_index=True)
+        weekly_pie = pd.concat([weekly_pie, pie_week], ignore_index=True)
+
+        line_month, pie_month = manager_generate_monthly(
+            df2[df2['user_id'] == user_id].reset_index(drop=True))
+        line_month.insert(0, 'user_id', user_id)
+        pie_month.insert(0, 'user_id', user_id)
+        monthly_line = pd.concat([monthly_line, line_month], ignore_index=True)
+        monthly_pie = pd.concat([monthly_pie, pie_month], ignore_index=True)
+
+    monthly_line.to_csv('.\\manager_csv\\manager_1y_monthly.csv')
+    monthly_pie.to_csv('.\\manager_csv\\manager_1m_monthly_pie.csv')
+
+    weekly_line.to_csv('.\\manager_csv\\manager_7m_weekly.csv')
+    weekly_pie.to_csv('.\\manager_csv\\manager_7m_weekly_pie.csv')
+    print('Completed weekly and monthly update in {} seconds.'.format(
+        datetime.now() - start_time))
+
+
+# if __name__ == "__main__":
+#     graph_weekly_monthly_update()
