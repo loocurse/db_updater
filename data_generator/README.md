@@ -10,6 +10,7 @@ The power energy generator is an object that generates data for the `power_energ
 | 2010-01-01 | 00:02:20 | 1262275340.0 | 1        | 0       | 0.01   | 0.01  | 0            | desktop     |
 | 2010-01-01 | 00:03:20 | 1262275400.0 | 1        | 0       | 0.31   | 0.45  | 0            | desktop     |
 | 2010-01-01 | 00:04:20 | 1262275460.0 | 1        | 0       | 0.0    | 0.01  | 0            | desktop     |
+
 A more representative output can be found [here](./example.csv)
 
 ## Method
