@@ -170,8 +170,8 @@ class PowerGenerator:
 if __name__ == '__main__':
     generator = PowerGenerator()
     # generator.time_delta = timedelta(days=2)
-    generator.start_date = date(2010,1,1)
-    generator.end_date = date(2010,12,31)
-    generator.num_of_users = 1
+    generator.start_date = date(2020,1,1)
+    generator.end_date = date(2020,1,5)
+    generator.num_of_users = 3
     generator.generate_data()
-    generator.to_csv('test.csv')
+    generator.to_csv('data_generator/example.csv')
