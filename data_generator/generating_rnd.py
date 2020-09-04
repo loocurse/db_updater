@@ -23,7 +23,6 @@ class PowerGenerator:
         self._user_id = []
         self._meter_id = []
         self._device_type = []
-
         # Factors (plm = plug load means, mf = month factor)
         self.plm = dict(desktop=20,
                         monitor=16,
@@ -154,7 +153,7 @@ class PowerGenerator:
             self._generate_data_for_user(user)
 
     def to_df(self):
-        
+
         df = pd.DataFrame(
             list(zip(self._date, self._time, self._unix_time, self._meter_id, self._user_id, self._energy, self._power,
                      self._device_state, self._device_type)),
@@ -170,8 +169,8 @@ class PowerGenerator:
 if __name__ == '__main__':
     generator = PowerGenerator()
     # generator.time_delta = timedelta(days=2)
-    generator.start_date = date(2020,1,1)
-    generator.end_date = date(2020,1,5)
-    generator.num_of_users = 3
+    generator.start_date = date(2010, 1, 1)
+    generator.end_date = date(2010, 12, 31)
+    generator.num_of_users = 1
     generator.generate_data()
     generator.to_csv('data_generator/example.csv')

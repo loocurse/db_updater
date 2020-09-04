@@ -47,18 +47,19 @@ def read_all_db(user_id=None):
 
 
 def manager_read_all_db(user_id=None):
-    """Reads the SQL database for the last 6 months and outputs the dataframe with cols stated below"""
-    connection = psycopg2.connect(**CONNECTION_PARAMS)
-    with connection.cursor() as cursor:
-        query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
-                "interval '6 month' AND date < date_trunc('hour', now())"
-        if user_id:
-            query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
-                    f"interval '6 month' AND date < date_trunc('hour', now()) AND user_id = {user_id}"
-        cursor.execute(query)
-        results = cursor.fetchall()
-        colnames = [desc[0] for desc in cursor.description]
-    df = pd.DataFrame(results, columns=colnames)
+    # """Reads the SQL database for the last 6 months and outputs the dataframe with cols stated below"""
+    # connection = psycopg2.connect(**CONNECTION_PARAMS)
+    # with connection.cursor() as cursor:
+    #     query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
+    #             "interval '6 month' AND date < date_trunc('hour', now())"
+    #     if user_id:
+    #         query = "SELECT * FROM power_energy_consumption WHERE date >= date_trunc('hour', now()) - " \
+    #                 f"interval '6 month' AND date < date_trunc('hour', now()) AND user_id = {user_id}"
+    #     cursor.execute(query)
+    #     results = cursor.fetchall()
+    #     colnames = [desc[0] for desc in cursor.description]
+    '''Import CSV'''
+    df = pd.read_csv('generator_7m.csv')
     df['date'] = pd.to_datetime(df['date'])
 
     return df
@@ -77,6 +78,7 @@ def read_building_average_consumption_db(user_id=None):
 
 
 def read_users_average_consumption_db(user_id=None):
+
     connection = psycopg2.connect(**CONNECTION_PARAMS)
     with connection.cursor() as cursor:
         query = "SELECT * FROM users_consumption_summary"

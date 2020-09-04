@@ -589,7 +589,7 @@ def manager_graph_daily_update():
 def manager_graph_weekly_monthly_update():
     print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Updating MANAGER weekly and monthly consumption')
     start_time = datetime.now()
-    df = read_all_db()
+    df = manager_read_all_db()
     weekly_line = pd.DataFrame()
     weekly_pie = pd.DataFrame()
     monthly_line = pd.DataFrame()
