@@ -29,6 +29,7 @@ Generate data for five users from the start of 2020 till today, and save it to v
 Indicates the first date of the generated data
 #### *end_date* 
 > Type: `datetime.date` 
+>
 > Default: `datetime.date.today()`
 
 Indicate the end date (inclusive) of the generated data.
@@ -38,21 +39,25 @@ Indicate the end date (inclusive) of the generated data.
 If you did not indicate a start date, you can also include a time delta. If both start date and time delta are assigned, the class will make use of the start date.
 #### *plug_id*
 > Type: `int`
+>
 > Default: `0`
 > 
 Just a place holder to fill in the column. Not yet made dynamic in code
 #### *considered_days*
 > Type: `list`
+>
 > Default: `[1,2,3,...,31]`
-> 
+
 When generating for long periods of time, the file can get large. This parameter gives you an option to generator a variable number of days in a month. For instance, when `generator.considered_days = [1,2,3]`, the resulting dataset would have Jan 1, Jan 2, Jan 3, Feb 1, Feb 2, Feb 3... days only. 
-#### *num_of_users* (default)
+#### *num_of_users*
 > Type: `int`
+>
 > Default: `1`
-> 
+
 Indicates the number of unique user_id's there are. 
 #### *plm (plug load mean)*
 > Type: `dictionary`
+>
 > Default: `dict(desktop=20,
                         monitor=16,
                         tasklamp=4,
@@ -64,6 +69,7 @@ Indicates the number of unique user_id's there are.
 The mean energy consumption for each appliance
 #### *mf (month factor)*
 > Type: `list`
+>
 > Default: `[1.3,  # Jan
                    1.2,  # Feb
                    1.4,  # Mar
@@ -85,6 +91,7 @@ The following parameters can be changed within the code, but I was lazy to make 
 
 #### *probability_hour* 
 > Type: `list`
+>
 > Default: `[0.00,  # 12am
                                     0.00,  # 1am
                                     0.00,  # 2am
